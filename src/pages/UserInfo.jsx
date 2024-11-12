@@ -177,19 +177,23 @@ const TimerStyled = styled.div`
     color: #555;
 `;
 
-const userinfoData = styled.div`
-    
-`;
-
 // ----------비밀번호 확인 전 Component----------
-function BeforeCheck ({ btnClick, userInfo }) {
+function BeforeCheck ({ btnClick, userData }) {
     const { register, handleSubmit, formState: { errors }, setError } = useForm();
-    const [myPassword, setMyPassword] = useState(''); // 임시 비밀번호
-    const [profileImg, setProfileImg] = useState(defaultProfileImg); // 임시 프로필 사진
-    // const [isSubmitted, setIsSubmitted] = useState(false); // 확인 버튼을 눌렀는지 확인하는 상태
+    const [myPassword, setMyPassword] = useState("");
+    const [profileImg, setProfileImg] = useState("");
+    const [nickname, setNickname] = useState("");
+
+    useEffect(() => {
+        // userInfo가 설정된 이후에만 상태 업데이트
+        if (userData) {
+            setMyPassword(userData.password);
+            setProfileImg(userData.profilephoto);
+            setNickname(userData.nickname);
+        }
+    }, [userData]);
 
     const handleCheck = (data) => {
-        // setIsSubmitted(true); // 확인 버튼을 누른 이후에만 에러 메시지를 보여줌
         if (data.passwordConfirm === myPassword) {
             btnClick(true); // 비밀번호가 맞으면 개인정보 수정 컴포넌트로 이동
         } else {
@@ -200,47 +204,23 @@ function BeforeCheck ({ btnClick, userInfo }) {
         }
     };
 
-    // '비밀번호를 통한 본인 확인' API 연결
-    const checkPassword = async (data) => {
-        const response = await fetch('https://yeogida.net/mypage/account', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json', // 요청 헤더 설정
-            },
-            body: JSON.stringify({ password: data.passwordConfirm }), // 요청 본문에 password 전달
-        });
-
-        // 서버 응답 처리
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json(); // 서버로부터의 응답 데이터 반환
-    };
-
     return (
         <BeforeCheckStyle>
             {/* 프로필 */}
             <MyProfile>
                 <MyProfileImage src={profileImg} />
-                <MyProfileName>seoyoung</MyProfileName>
+                <MyProfileName>{nickname}</MyProfileName>
             </MyProfile>
 
             {/* 비밀번호 입력란 */}
             <CheckPassword>
                 <CheckPasswordText>비밀번호 확인</CheckPasswordText>
+                
                 {/* 입력칸 */}
-                {/* <EditInfoInput 
-                    type='password' 
-                    placeholder='비밀번호를 한번 더 입력해주세요.' 
-                    style={{ 
-                        marginTop: '20px',
-                        marginBottom: '65px'
-                    }}
-                /> */}
                 <InputField
                     id="PasswordConfirm"
                     type="password"
-                    placeholder="비밀번호 확인(1111)"
+                    placeholder="비밀번호 확인"
                     {...register('passwordConfirm', {
                         required: '비밀번호를 입력해주세요.',
                     })}
@@ -260,16 +240,15 @@ function BeforeCheck ({ btnClick, userInfo }) {
                 <Btn 
                     text='확인'
                     style={{marginLeft: 'auto', marginTop: '60px'}}
-                    onClick={handleSubmit(checkPassword)}
+                    onClick={handleSubmit(handleCheck)}
                 />
-
             </CheckPassword>
         </BeforeCheckStyle>
     );
 }
 
 /* 프로필 사진 컴포넌트 */
-function ProfileImage({ userInfo, setUserInfo }) {
+function ProfileImage({ userInfo }) {
     const [profileImg, setProfileImg] = useState(userInfo?.profilephoto || '');  // 초기값 설정
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
@@ -355,14 +334,16 @@ function ProfileImage({ userInfo, setUserInfo }) {
 }
 
 /* 개인정보 수정 컴포넌트 */
-function EditInfo ({ userInfo, setUserInfo }) {
+function EditInfo ({ userInfo, setUserInfo, password, setPassword, passwordConfirm, setPasswordConfirm }) {
     const {
         register,
         handleSubmit,
         watch, // watch 추가
         setValue, // setValue를 사용하여 동적으로 값을 설정
         trigger,
-        formState: { isSubmitting, errors },
+        setError,
+        clearErrors,
+        formState: { errors },
     } = useForm();
     const [isEmailDisabled, setIsEmailDisabled] = useState(false);
     const [isCheckingEmail, setIsCheckingEmail] = useState(false);
@@ -373,13 +354,56 @@ function EditInfo ({ userInfo, setUserInfo }) {
     const [showCertificationInput, setShowCertificationInput] = useState(false);
     const [isCertified, setIsCertified] = useState(false);
 
-    // userInfo가 변경될 때마다 폼 필드에 값을 설정
+    // 이메일과 닉네임 필드를 초기화
     useEffect(() => {
-        if (userInfo) {
-            setValue('email', userInfo.email); // 이메일 필드에 userInfo.email 값을 설정
-            setValue('nickname', userInfo.nickname); // 닉네임 필드에 userInfo.nickname 값을 설정
+        if (userInfo?.email) {
+            setValue('email', userInfo.email);
         }
-    }, [userInfo, setValue]);  // userInfo가 변경될 때 실행
+        if (userInfo?.nickname) {
+            setValue('nickname', userInfo.nickname);
+        }
+    }, [userInfo, setValue]);
+
+    const watchPassword = watch('password', password);
+    const watchPasswordConfirm = watch('passwordConfirm', passwordConfirm);
+
+    const handlePasswordChange = (e) => {
+        const value = e.target.value;
+        setPassword(value);
+
+        // 비어 있을 때 에러 제거
+        if (value === '') {
+            clearErrors('password');
+        } else {
+            if (value.length < 10) {
+                setError('password', { message: '최소 10자 이상 입력해주세요.' });
+            } else if (!/(?=.*[!@#$%^&*()_+[\]{};':"\\|,.<>?~-])/.test(value)) {
+                setError('password', { message: '특수 문자가 포함되어야 합니다.' });
+            } else if (!/(?=.*\d)/.test(value)) {
+                setError('password', { message: '숫자가 포함되어야 합니다.' });
+            } else if (!/(?=.*[a-zA-Z])/.test(value)) {
+                setError('password', { message: '영문자가 포함되어야 합니다.' });
+            } else {
+                clearErrors('password'); // 조건을 모두 만족할 경우 에러 제거
+            }
+        }
+    };
+
+    const handlePasswordConfirmChange = (e) => {
+        const value = e.target.value;
+        setPasswordConfirm(value);
+
+        // 비어 있을 때 에러 제거
+        if (value === '') {
+            clearErrors('passwordConfirm');
+        } else {
+            if (value !== watchPassword) {
+                setError('passwordConfirm', { message: '비밀번호가 일치하지 않습니다.' });
+            } else {
+                clearErrors('passwordConfirm'); // 일치할 경우 에러 제거
+            }
+        }
+    };
 
     // 이메일 체크 및 인증번호 요청 함수
     const handleEmailCheck = async (event) => {
@@ -478,7 +502,7 @@ function EditInfo ({ userInfo, setUserInfo }) {
     // 모달 닫기 함수
     const closeModal = () => {
         setIsModalOpen(false);
-        setModalMessage(''); // 메시지 초기화
+        setModalMessage('');
     };
 
     return (
@@ -495,75 +519,38 @@ function EditInfo ({ userInfo, setUserInfo }) {
                             <span>{userInfo?.id}</span>
                         </InputContainer>
 
+                        {/* 비밀번호 */}
                         <InputContainer style={{ marginBottom: '35px' }}>
-                            <Label>
-                                비밀번호
-                            </Label>
+                            <Label>비밀번호</Label>
                             <InputField
                                 id="password"
                                 type="password"
                                 placeholder="*********"
-                                {...register('password', {
-                                    required: '비밀번호는 필수 입력입니다.',
-                                    minLength: {
-                                        value: 10,
-                                        message: '최소 10자 이상 입력해주세요.',
-                                    },
-                                    validate: {
-                                        containsSpecialChar: (value) =>
-                                            /(?=.*[!@#$%^&*()_+[\]{};':"\\|,.<>?~-])/.test(
-                                                value
-                                            ) || '특수 문자가 포함되어야 합니다.',
-                                        containsNumber: (value) =>
-                                            /(?=.*\d)/.test(value) ||
-                                            '숫자가 포함되어야 합니다.',
-                                        containsLetter: (value) =>
-                                            /(?=.*[a-zA-Z])/.test(value) ||
-                                            '영문자가 포함되어야 합니다.',
-                                    },
-                                })}
-                                onChange={(e) => {
-                                    register('password').onChange(e);
-                                    trigger('password'); // 유효성 검사 트리거
-                                }}
+                                value={password}
+                                {...register('password')}
+                                onChange={handlePasswordChange}
                                 aria-invalid={errors.password ? 'true' : 'false'}
                             />
                         </InputContainer>
                         <ErrorStyled>
-                            {errors.password && (
-                                <ErrorMessage>{errors.password.message}</ErrorMessage>
-                            )}
+                            {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
                         </ErrorStyled>
 
+                        {/* 비밀번호 확인 */}
                         <InputContainer style={{ marginBottom: '35px' }}>
-                            <Label>
-                                비밀번호 확인
-                            </Label>
+                            <Label>비밀번호 확인</Label>
                             <InputField
-                                id="PasswordConfirm"
+                                id="passwordConfirm"
                                 type="password"
                                 placeholder="비밀번호 확인"
-                                {...register('passwordConfirm', {
-                                    required: '동일한 비밀번호를 입력해주세요.',
-                                    validate: {
-                                        matchesPreviousPassword: (value) =>
-                                            value === watch('password') ||
-                                            '비밀번호가 일치하지 않습니다.',
-                                    },
-                                })}
-                                onChange={(e) => {
-                                    register('passwordConfirm').onChange(e);
-                                    trigger('passwordConfirm'); // 유효성 검사 트리거
-                                }}
+                                value={passwordConfirm}
+                                {...register('passwordConfirm')}
+                                onChange={handlePasswordConfirmChange}
                                 aria-invalid={errors.passwordConfirm ? 'true' : 'false'}
                             />
                         </InputContainer>
                         <ErrorStyled>
-                            {errors.passwordConfirm && (
-                                <ErrorMessage>
-                                    {errors.passwordConfirm.message}
-                                </ErrorMessage>
-                            )}
+                            {errors.passwordConfirm && <ErrorMessage>{errors.passwordConfirm.message}</ErrorMessage>}
                         </ErrorStyled>
 
                         {/* 이름 */}
@@ -693,10 +680,9 @@ function EditInfo ({ userInfo, setUserInfo }) {
 }
 
 // ----------비밀번호 확인 후 Component----------
-function AfterCheck ({ userData }) {
+function AfterCheck({ userData }) {
     const navigate = useNavigate();
 
-    // 초기 userInfo 상태를 null로 설정
     const [userInfo, setUserInfo] = useState({
         id: '',
         name: '',
@@ -707,47 +693,71 @@ function AfterCheck ({ userData }) {
         profilephoto: '',
     });
 
-    const [oneBtnModal, setOneBtnModal] = useState(false);
-    const [twoBtnModal, setTwoBtnModal] = useState(false);
+    const [editModal, setEditModal] = useState(false);
+    const [deleteModal, setDeleteModal] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
     const [modalChildren, setModalChildren] = useState('');
+    const [modalType, setModalType] = useState(1);
+    const [isFormValid, setIsFormValid] = useState(false); // EditInfo 컴포넌트의 유효성 검사 상태
+
+    const [password, setPassword] = useState('');
+    const [passwordConfirm, setPasswordConfirm] = useState('');
 
     // userData가 변경될 때 userInfo 업데이트
     useEffect(() => {
-        // userData가 비어 있지 않을 때만 업데이트
-        if (userData && Object.keys(userData).length > 0) {
+        if (userData) {
             setUserInfo({
-                id: userData.id || '',
-                name: userData.name || '',
-                phonenumber: userData.phonenumber || '',
-                birthdate: userData.birthdate || '',
-                email: userData.email || '',
-                nickname: userData.nickname || '',
-                profilephoto: userData.profilephoto || '',
+                id: userData.id,
+                name: userData.name,
+                phonenumber: userData.phonenumber,
+                birthdate: userData.birthdate,
+                email: userData.email,
+                nickname: userData.nickname,
+                profilephoto: userData.profilephoto,
             });
         }
-    }, [userData]); // userData가 업데이트될 때마다 실행
+    }, [userData]);
 
-    // 컴포넌트가 다시 렌더링될 때 userInfo를 확인
+    // 비밀번호와 비밀번호 확인의 유효성 검사
     useEffect(() => {
-        console.log("userInfo after rendering: ", userInfo);
-    }, [userInfo]);  // userInfo가 변경될 때마다 실행
+        const isValidPassword =
+            password.length >= 10 &&
+            /(?=.*[!@#$%^&*()_+[\]{};':"\\|,.<>?~-])/.test(password) &&
+            /(?=.*\d)/.test(password) &&
+            /(?=.*[a-zA-Z])/.test(password);
 
-    // userData 또는 userInfo가 비어 있을 경우 로딩 처리
-    if (!userData || Object.keys(userData).length === 0 || !userInfo) {
-        return <p>Loading...</p>;  // userInfo가 로드되지 않으면 로딩 표시
-    }
+        const formValid = isValidPassword && password === passwordConfirm;
+        setIsFormValid(formValid);
+    }, [password, passwordConfirm]);
 
     // 수정 완료 Modal
     const handleEditSubmit = () => {
-        setModalTitle('수정이 완료되었습니다.');
-        setOneBtnModal(true);
+        if (password === '' && passwordConfirm === '') {
+            // 비밀번호와 비밀번호 확인이 비어있을 때는 유효성 검사를 통과한 것으로 간주
+            setModalTitle('수정이 완료되었습니다.');
+            setModalChildren(null);
+            setModalType(1);
+            setEditModal(true);
+        } else if (isFormValid) {
+            // 비밀번호와 비밀번호 확인이 유효할 때
+            setModalTitle('수정이 완료되었습니다.');
+            setModalChildren(null);
+            setModalType(1);
+            setEditModal(true);
+        } else {
+            // 비밀번호가 유효하지 않거나 일치하지 않을 때
+            setModalTitle('비밀번호를 다시 한번 확인해주세요.');
+            setModalChildren(null);
+            setModalType(1);
+            setEditModal(true);
+        }
     };
 
     // 탈퇴 요청 Modal
     const handleDeleteId = () => {
         setModalTitle('정말 탈퇴하시겠습니까?');
-        setTwoBtnModal(true);
+        setModalType(2);
+        setDeleteModal(true);
     };
 
     // 탈퇴 완료 Modal
@@ -758,97 +768,97 @@ function AfterCheck ({ userData }) {
                 지금까지 <b>여기다</b>를 이용해주셔서 감사합니다.
             </>
         );
-        setTwoBtnModal(false);
-        setOneBtnModal(true);
+        setModalType(1);
+        setDeleteModal(false);
+        setEditModal(true);
     };
 
-    // 모달에서 확인 버튼을 누르면 Home으로 이동
-    const handleCloseAndNavigateHome = () => {
-        setOneBtnModal(false); // 모달 닫기
-        navigate('/home'); // Home 페이지로 이동
+    const handleCloseEditModal = () => {
+        setEditModal(false);
     };
-    
+
+    const handleCloseAndNavigateHome = () => {
+        setEditModal(false);
+        navigate('/home');
+    };
+
     return (
         <AfterCheckStyle>
-            {/* 프로필 사진 */}
-            <ProfileImage 
-                userInfo={userInfo} 
-                setUserInfo={setUserInfo} 
-            />
+            {!userData || Object.keys(userData).length === 0 || !userInfo ? (
+                <p>Loading...</p>
+            ) : (
+                <>
+                    <ProfileImage userInfo={userInfo} setUserInfo={setUserInfo} />
 
-            {/* 개인정보 수정 */}
-            <EditInfo 
-                userInfo={userInfo} 
-                setUserInfo={setUserInfo} 
-            />
+                    <EditInfo 
+                        userInfo={userInfo} 
+                        setUserInfo={setUserInfo} 
+                        password={password}
+                        setPassword={setPassword}
+                        passwordConfirm={passwordConfirm}
+                        setPasswordConfirm={setPasswordConfirm}
+                    />
 
-            <Btn 
-                width='240px'
-                height='82px'
-                fontWeight='bold'
-                fontSize='26px'
-                borderRadius='15px'
-                text='수정하기'
-                onClick={handleEditSubmit}
-            />
-
-            <Line />
-
-            {/* 문의하기 */}
-            <StyledContainer>
-                <StyledTitle>문의하기</StyledTitle>
-                <StyledContent>
-                    <span>
-                        여기다 웹사이트 관련 문의사항은 <b>swuweb0320@gmail.com</b>으로 보내주시면 감사하겠습니다.
-                    </span>
-                </StyledContent>
-            </StyledContainer>
-
-            {/* 회원 탈퇴 */}
-            <StyledContainer>
-                <StyledTitle>회원 탈퇴</StyledTitle>
-                <StyledContent>
-                    <ul style={{ margin: 0 }}>
-                        <li>
-                            원활한 회원 정보 관리를 위해 회원 탈퇴 후 30일 간 탈퇴한 회원의 개인정보와 여행 일정 정보가 보존됩니다.
-                            <br />31일 후부터 같은 회원 정보로 재가입이 가능합니다.
-                        </li>
-                        <li>
-                            <p>한번 탈퇴를 신청하면 취소할 수 없습니다.</p>
-                        </li>
-                    </ul>
                     <Btn 
-                            width='180px'
-                            height='55px'
-                            borderRadius='15px'
-                            borderColor='#59abe6'
-                            backgroundColor='#fff'
-                            color='#59abe6'
-                            fontSize='20px'
-                            text='회원 탈퇴'
-                            style={{ marginTop: '12px' }}
-                            onClick={() => handleDeleteId()}
+                        width='240px'
+                        height='82px'
+                        fontWeight='bold'
+                        fontSize='26px'
+                        borderRadius='15px'
+                        text='수정하기'
+                        onClick={handleEditSubmit}
+                    />
+
+                    <Line />
+
+                    <StyledContainer>
+                        <StyledTitle>문의하기</StyledTitle>
+                        <StyledContent>
+                            <span>여기다 웹사이트 관련 문의사항은 <b>swuweb0320@gmail.com</b>으로 보내주시면 감사하겠습니다.</span>
+                        </StyledContent>
+                    </StyledContainer>
+
+                    <StyledContainer>
+                        <StyledTitle>회원 탈퇴</StyledTitle>
+                        <StyledContent>
+                            <ul style={{ margin: 0 }}>
+                                <li>원활한 회원 정보 관리를 위해 회원 탈퇴 후 30일 간 탈퇴한 회원의 개인정보와 여행 일정 정보가 보존됩니다.</li>
+                                <li><p>한번 탈퇴를 신청하면 취소할 수 없습니다.</p></li>
+                            </ul>
+                            <Btn 
+                                width='180px'
+                                height='55px'
+                                borderRadius='15px'
+                                borderColor='#59abe6'
+                                backgroundColor='#fff'
+                                color='#59abe6'
+                                fontSize='20px'
+                                text='회원 탈퇴'
+                                style={{ marginTop: '12px' }}
+                                onClick={handleDeleteId}
+                            />
+                        </StyledContent>
+
+                        {/* Modals */}
+                        <Modal 
+                            isOpen={editModal} 
+                            onRequestClose={handleCloseEditModal}
+                            title={modalTitle}
+                            children={modalChildren}
+                            type={modalType}
+                            onConfirm={handleCloseEditModal}
                         />
-                </StyledContent>
-
-                {/* Modals */}
-                <Modal 
-                    isOpen={oneBtnModal} 
-                    onRequestClose={() => setOneBtnModal(false)}
-                    title={modalTitle}
-                    children={modalChildren}
-                    type={1}
-                    onConfirm={handleCloseAndNavigateHome} // 확인 버튼 클릭 시 Home으로 이동
-                />
-                <Modal 
-                    isOpen={twoBtnModal} 
-                    onRequestClose={() => setTwoBtnModal(false)}
-                    title={modalTitle}
-                    type={2}
-                    onConfirm={completeDeleteId}
-                />
-            </StyledContainer>
-
+                        <Modal 
+                            isOpen={deleteModal} 
+                            onRequestClose={() => setDeleteModal(false)}
+                            title={modalTitle}
+                            children={modalChildren}
+                            type={modalType}
+                            onConfirm={completeDeleteId}
+                        />
+                    </StyledContainer>
+                </>
+            )}
         </AfterCheckStyle>
     );
 }
@@ -858,24 +868,22 @@ export default function UserInfo() {
     const [isBtnClicked, setIsBtnClicked] = useState(false);
     const [userData, setUserData] = useState(null);
 
-    // 컴포넌트 마운트 시 사용자 데이터를 가져오는 함수
-    useEffect(() => {
-        const getUserData = async () => {
-            try {
-                const response = await fetch('/data/userinfoMockData.json');  // mock data에서 사용자 정보 가져오기
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                console.log('Fetched user data:', data);
-                setUserData(data[0]); // 첫 번째 사용자 데이터로 설정
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-            }
-        };
+    // mockData 생성
+    const mockData = {
+        id: "baeksy1234",
+        password: "1111",
+        name: "백서영",
+        birthdate: "2000-01-01",
+        phonenumber: "010-1234-5678",
+        email: "baeksy1234@gmail.com",
+        nickname: "sy",
+        profilephoto: defaultProfileImg
+    };
 
-        getUserData();
-    }, []); // 컴포넌트가 마운트될 때 한 번만 실행
+    useEffect(() => {
+        // 컴포넌트 마운트 시 mockData를 userData에 설정
+        setUserData(mockData);
+    }, []);
 
     return (
         <section>
@@ -890,12 +898,10 @@ export default function UserInfo() {
                     
                     {isBtnClicked ? (
                         // 비밀번호 확인 성공하면 개인정보 수정 페이지 렌더링
-                        <AfterCheck 
-                            userData={userData}
-                        />
+                        <AfterCheck userData={userData} />
                     ) : (
                         // 처음에는 비밀번호 확인 페이지 렌더링
-                        <BeforeCheck btnClick={setIsBtnClicked} />
+                        <BeforeCheck btnClick={setIsBtnClicked} userData={userData} />
                     )}
 
                 </ArticleStyle>

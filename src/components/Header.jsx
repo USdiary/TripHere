@@ -195,7 +195,7 @@ export default function Header({ isAuthenticated }) {
                     마이페이지
                     {viewDropdown && (
                       <StyledDropdown>
-                        <DropdownMenu
+                        {/* <DropdownMenu
                           onClick={() =>
                             navigateWithAuthCheck("/mypage/userinfo")
                           }>
@@ -210,6 +210,24 @@ export default function Header({ isAuthenticated }) {
                         <DropdownMenu
                           onClick={() =>
                             navigateWithAuthCheck("/mypage/scrap")
+                          }>
+                          스크랩
+                        </DropdownMenu> */}
+                        <DropdownMenu
+                          onClick={() =>
+                            navigate("/mypage/userinfo")
+                          }>
+                          회원정보 관리
+                        </DropdownMenu>
+                        <DropdownMenu
+                          onClick={() =>
+                            navigate("/mypage/friend")
+                          }>
+                          친구목록
+                        </DropdownMenu>
+                        <DropdownMenu
+                          onClick={() =>
+                            navigate("/mypage/scrap")
                           }>
                           스크랩
                         </DropdownMenu>

@@ -57,8 +57,7 @@ const DeleteIcon = styled.img`
     filter: invert(100%) sepia(0%) saturate(2166%) hue-rotate(114deg) brightness(120%) contrast(76%);
 
     &:hover {
-        filter: invert(76%) sepia(19%) saturate(1253%) hue-rotate(314deg) brightness(97%) contrast(98%);
-    }
+        filter: invert(62%) sepia(76%) saturate(554%) hue-rotate(177deg) brightness(93%) contrast(94%);
 `;
 
 const StyledDropdown = styled.div `
