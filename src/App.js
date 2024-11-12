@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  useLocation,
-  BrowserRouter as Router,
-  Route,
-  Routes,
-} from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -23,7 +18,6 @@ import ResetPassword from "./pages/ResetPassword";
 import TripDetailPage from "./pages/TripDetailPage";
 import TripDetailEditorPage from "./pages/TripDetailEditorPage";
 
-// 스크롤을 최상단으로 끌어올려주는 컴포넌트 생성
 const ScrollToTop = () => {
   const { pathname } = useLocation();
 
@@ -36,102 +30,56 @@ const ScrollToTop = () => {
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [accessToken, setAccessToken] = useState(null); // Access Token 상태 추가
+  const [accessToken, setAccessToken] = useState(null);
   const location = useLocation();
 
   const checkLoginStatus = async () => {
     console.log("Checking login status...");
-
     try {
-      console.log("Sending request to /users/me...");
-      const response = await axios.post(
-        "https://www.yeogida.net/users/me",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`, // accessToken을 Authorization 헤더에 포함
-          },
-          withCredentials: true, // 쿠키 포함
-        }
-      );
-      console.log("Login status check successful:", response.data);
+      const response = await axios.post("/users/me", {}, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // accessToken을 Authorization 헤더에 포함
+        },
+        withCredentials: true,
+      });
       setIsAuthenticated(true);
     } catch (error) {
       console.error("Error in /users/me request:", error.message);
-      if (error.response) {
-        console.error("Response status:", error.response.status);
-        console.error("Response data:", error.response.data);
-      }
-
-      if (error.response && error.response.status === 419) {
-        console.log("Token expired, attempting to refresh token...");
-        try {
-          const refreshResponse = await axios.post(
-            "https://www.yeogida.net/users/refresh",
-            {},
-            { withCredentials: true }
-          );
-          const newAccessToken = refreshResponse.data.accessToken;
-          console.log("Token refresh successful:", newAccessToken);
-          setAccessToken(newAccessToken); // 새로운 accessToken 저장
-          setIsAuthenticated(true);
-          // 새 accessToken으로 다시 /users/me 요청
-          await checkLoginStatus();
-        } catch (refreshError) {
-          console.error(
-            "Error in /users/refresh request:",
-            refreshError.message
-          );
-          if (refreshError.response) {
-            console.error(
-              "Refresh response status:",
-              refreshError.response.status
-            );
-            console.error("Refresh response data:", refreshError.response.data);
-          }
-          setIsAuthenticated(false);
-        }
-      } else {
-        console.log("User is not authenticated.");
-        setIsAuthenticated(false);
-      }
+      setIsAuthenticated(false);
     }
   };
 
   useEffect(() => {
-    console.log("Location changed:", location.pathname);
-    checkLoginStatus();
-  }, [location]);
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      setAccessToken(token);
+      checkLoginStatus();
+    } else {
+      setIsAuthenticated(false);
+    }
+  }, [location]); // `location` 변경 시 로그인 상태를 재확인
 
   return (
     <div className="App">
-      <Header isAuthenticated={isAuthenticated} /> {/* 상태 전달 */}
-      <ScrollToTop /> {/* ScrollToTop 컴포넌트를 추가 */}
+      <Header isAuthenticated={isAuthenticated} />
+      <ScrollToTop />
       <Routes>
-        <Route path="/" element={<Home />} /> {/* 메인 */}
-        <Route path="/login" element={<Login />} /> {/* 로그인 */}
-        <Route path="/signup" element={<Signup />} /> {/* 회원가입 */}
-        <Route path="/find/id" element={<FindId />} /> {/* 아이디 찾기 */}
-        <Route path="/find/password" element={<FindPassword />} />{" "}
-        {/* 비밀번호 찾기 */}
-        {/* 아이디 찾기 성공 */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/find/id" element={<FindId />} />
+        <Route path="/find/password" element={<FindPassword />} />
         <Route path="/find/id/success" element={<FindIdSuccess />} />
-        {/* 비밀번호 재설정 */}
         <Route path="/find/password/reset" element={<ResetPassword />} />
-        {/* 나의 여행 */}
+
+        {/* 로그인 여부와 관계없이 접근 가능한 페이지 */}
         <Route path="/mytrip" element={<Mytrip />} />
-        {/*새 여행 만들기*/}
         <Route path="/mytrip/editor" element={<Editor />} />
-        {/* 나의 여행 상세페이지 */}
         <Route path="/mytrip/:id" element={<TripDetailPage />} />
-        {/* 나의 여행 상세페이지 수정 */}
         <Route path="/mytrip/editor/:id" element={<TripDetailEditorPage />} />
-        {/* 여행 공유 */}
         <Route path="/shared-itineraries" element={<Sharetrip />} />
-        {/* 여행 공유 상세*/}
         <Route path="/details/:id" element={<SharetripDetail />} />
-        {/* 마이페이지 */}
-        <Route path="/mypage/*" element={<Mypage />} />{" "}
+        <Route path="/mypage/*" element={<Mypage />} />
       </Routes>
       <Footer />
     </div>

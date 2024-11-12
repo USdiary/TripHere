@@ -335,7 +335,7 @@ function ListAndRequest({ handleChange, onEnterPress, selected, inputValue, sort
 
     return (
         <>
-            <SearchBarStyle style={{ visibility: selected === 1 ? 'hidden' : 'visible' }}>
+            <SearchBarStyle style={{ visibility: Number(selected) === 1 ? 'hidden' : 'visible' }}>
                 <LeftContent>
                     <img src={searchIcon} alt='검색 돋보기 아이콘' />
                 </LeftContent>

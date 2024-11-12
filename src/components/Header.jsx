@@ -78,7 +78,7 @@ const StyledDropdown = styled.div`
 `;
 
 const DropdownMenu = styled.div`
-  width: 100%;
+  width: 93%;
   font-size: 16px;
   padding: 20px 0 20px 20px;
   color: black;
@@ -135,15 +135,6 @@ export default function Header({ isAuthenticated }) {
     }
   };
 
-  // 로그인 필수 페이지 이동 처리 함수
-  const navigateWithAuthCheck = (path) => {
-    if (isAuthenticated) {
-      navigate(path);
-    } else {
-      openModal("로그인이 필요합니다.", "/login");
-    }
-  };
-
   // 모달
   const openModal = (message, navigateToPage = "") => {
     setModalMessage(message);
@@ -182,12 +173,8 @@ export default function Header({ isAuthenticated }) {
           <NavBox>
             <Nav>
               <ul>
-                <li onClick={() => navigateWithAuthCheck("/mytrip")}>
-                  나의여행
-                </li>
-                <li onClick={() => navigate("/shared-itineraries")}>
-                  여행공유
-                </li>
+                <li onClick={() => navigate("/mytrip")}>나의여행</li>
+                <li onClick={() => navigate("/shared-itineraries")}>여행공유</li>
                 <li>
                   <MyPageContainer
                     onMouseEnter={() => setIsHovered(true)}
@@ -199,18 +186,13 @@ export default function Header({ isAuthenticated }) {
                           onClick={() =>
                             navigateWithAuthCheck("/mypage/userinfo")
                           }>
+                        <DropdownMenu onClick={() => navigate("/mypage/userinfo")}>
                           회원정보 관리
                         </DropdownMenu>
-                        <DropdownMenu
-                          onClick={() =>
-                            navigateWithAuthCheck("/mypage/friend")
-                          }>
+                        <DropdownMenu onClick={() => navigate("/mypage/friend")}>
                           친구목록
                         </DropdownMenu>
-                        <DropdownMenu
-                          onClick={() =>
-                            navigateWithAuthCheck("/mypage/scrap")
-                          }>
+                        <DropdownMenu onClick={() => navigate("/mypage/scrap")}>
                           스크랩
                         </DropdownMenu> */}
                         <DropdownMenu

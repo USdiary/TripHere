@@ -106,6 +106,7 @@ const EmptyMessage = styled.div`
 `;
 
 // ---------------폴더 Component---------------
+// "ScrapFolders" 컴포넌트
 function ScrapFolders({ onSelectFolder }) {
     const [folderData, setFolderData] = useState(initialFolderData);
     const [oneBtnModal, setOneBtnModal] = useState(false);

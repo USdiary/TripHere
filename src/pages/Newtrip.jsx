@@ -85,7 +85,11 @@ const ModalButton = styled.button`
 `;
 
 export default function Newtrip({ closeModal }) {
-    const [sharedOptions, setSharedOptions] = useState([{ value: 'none', label: '없음' }]);
+    const [sharedOptions, setSharedOptions] = useState([
+        { value: 'user1', label: 'user1' },
+        { value: 'user2', label: 'user2' },
+        { value: 'user3', label: 'user3' }
+    ]);
 
     const [inputs, setInputs] = useState({
         제목: "",
@@ -99,7 +103,6 @@ export default function Newtrip({ closeModal }) {
     const navigate = useNavigate();
     const [modalOpen, setModalOpen] = useState(false); // 모달 상태
     const [modalMessage, setModalMessage] = useState(''); // 모달에 표시할 메시지
-    const [itineraryId, setItineraryId] = useState(0);  // itinerary_id 상태
 
     const onChange = (e) => {
         const { value, name } = e.target;

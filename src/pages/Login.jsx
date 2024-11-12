@@ -4,7 +4,6 @@ import Button from '../components/Btn';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import CommonModal from '../components/CommonModal';
-import { loginUser } from '../api/Login/LoginApi';
 
 const LoginForm = styled.div`
     display: flex;
@@ -56,6 +55,10 @@ export default function Login() {
     const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
 
+    // 로컬에서 사용할 모의 아이디와 비밀번호
+    const mockUserId = 'testUser';  // 모의 아이디
+    const mockPassword = 'testPassword';  // 모의 비밀번호
+
     const openModal = (title, navigateToPage = '') => {
         setModalTitle(title);
         setNavigateTo(navigateToPage);
@@ -68,29 +71,16 @@ export default function Login() {
 
     const handleLogin = async (event) => {
         event.preventDefault();
+
         if (userId && password) {
-            try {
-                console.log('로그인 요청 시작');
-                console.log('입력된 아이디:', userId);
-                console.log('입력된 비밀번호:', password);
+            // 아이디와 비밀번호가 로컬 데이터와 일치하는지 확인
+            if (userId === mockUserId && password === mockPassword) {
+                // 로그인 성공 시 토큰 저장
+                localStorage.setItem('authToken', 'dummyToken');  // 실제로는 백엔드에서 받은 JWT 토큰을 저장
 
-                // API 요청 및 응답 처리
-                const { response, status } = await loginUser(userId, password);
-
-                if (response) {
-                    navigate('/');
-                } else if (status === 401) {
-                    // 인증 실패
-                    openModal('아이디 또는 비밀번호가 일치하지 않습니다.');
-                } else {
-                    // 기타 오류
-                    openModal(
-                        '로그인 중 문제가 발생했습니다.다시 시도해주세요.'
-                    );
-                }
-            } catch (error) {
-                console.error('Login request failed:', error);
-                openModal('서버와의 연결에 문제가 발생했습니다.');
+                navigate('/');  // 로그인 성공 시 홈으로 이동
+            } else {
+                openModal('아이디 또는 비밀번호가 일치하지 않습니다.');
             }
         } else {
             openModal('아이디와 비밀번호를 입력해주세요.');
