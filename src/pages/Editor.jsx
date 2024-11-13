@@ -194,30 +194,30 @@ export default function Editor({ onChange = () => { } }) {
       address: result.address,
     };
 
-  // 현재 day에 해당하는 장소 정보 업데이트
-  setPlaces(prevPlaces => {
-    const updatedPlaces = { ...prevPlaces };
-    if (!updatedPlaces[currentDay]) {
-      updatedPlaces[currentDay] = [];
-    }
-    updatedPlaces[currentDay].push(newMarker);
-    return updatedPlaces;
-  });
-
-  // 마커 추가
-  setMarkers(prevMarkers => {
-    const updatedMarkers = { ...prevMarkers };
-    if (!updatedMarkers[currentDay]) {
-      updatedMarkers[currentDay] = [];
-    }
-    updatedMarkers[currentDay].push({
-      lat: result.lat,
-      lng: result.lng,
-      index: markers[currentDay]?.length || 0,
+    // 현재 day에 해당하는 장소 정보 업데이트
+    setPlaces(prevPlaces => {
+      const updatedPlaces = { ...prevPlaces };
+      if (!updatedPlaces[currentDay]) {
+        updatedPlaces[currentDay] = [];
+      }
+      updatedPlaces[currentDay].push(newMarker);
+      return updatedPlaces;
     });
-    return updatedMarkers;
-  });
-};
+
+    // 마커 추가
+    setMarkers(prevMarkers => {
+      const updatedMarkers = { ...prevMarkers };
+      if (!updatedMarkers[currentDay]) {
+        updatedMarkers[currentDay] = [];
+      }
+      updatedMarkers[currentDay].push({
+        lat: result.lat,
+        lng: result.lng,
+        index: markers[currentDay]?.length || 0,
+      });
+      return updatedMarkers;
+    });
+  };
 
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
@@ -271,7 +271,7 @@ export default function Editor({ onChange = () => { } }) {
 
   // 구현 예정
   const handleEditClick = () => {
-    
+
   }
 
   const handleTabClick = (index) => {
@@ -282,7 +282,7 @@ export default function Editor({ onChange = () => { } }) {
   // const submitTravelPlan = async (requestData) => {
   //     try {
   //         const formData = new FormData();
-          
+
   //         // FormData에 텍스트 데이터 추가
   //         formData.append('itinerary_id', requestData.itinerary_id);
   //         formData.append('user_id', requestData.user_id);
@@ -295,7 +295,7 @@ export default function Editor({ onChange = () => { } }) {
   //         formData.append('description', requestData.description);
   //         formData.append('created_at', requestData.created_at);
   //         formData.append('updated_at', requestData.updated_at);
-          
+
   //         // FormData에 파일 추가
   //         if (requestData.thumbnail) {
   //             formData.append('thumbnail', requestData.thumbnail);
@@ -322,34 +322,34 @@ export default function Editor({ onChange = () => { } }) {
   // };
 
   const handleSaveClick = async (e) => {
-      e.preventDefault();
+    e.preventDefault();
 
-      // 여행 계획 데이터를 생성
-      const requestData = {
-          itinerary_id: itineraryId,  // 여행 일정 ID
-          user_id: userId,                 // 사용자 ID를 임시 고정
-          title,                       // 여행 제목
-          startdate: dateRange.split(' ~ ')[0],  // 여행 시작일
-          enddate: dateRange.split(' ~ ')[1],    // 여행 종료일
-          destination: destinationArray.join(', '),  // 여행지 목록
-          public_private: true,        // 공개 여부
-          likenumber: 0,               // 좋아요 수
-          commentnumber: 0,            // 댓글 수
-          thumbnail,                   // 썸네일 이미지
-          description: value[currentDay - 1] || '', // 여행 설명
-          created_at: new Date().toISOString(),    // 생성일
-          updated_at: new Date().toISOString(),    // 수정일
-      };
+    // 여행 계획 데이터를 생성
+    const requestData = {
+      itinerary_id: itineraryId,  // 여행 일정 ID
+      user_id: userId,                 // 사용자 ID를 임시 고정
+      title,                       // 여행 제목
+      startdate: dateRange.split(' ~ ')[0],  // 여행 시작일
+      enddate: dateRange.split(' ~ ')[1],    // 여행 종료일
+      destination: destinationArray.join(', '),  // 여행지 목록
+      public_private: true,        // 공개 여부
+      likenumber: 0,               // 좋아요 수
+      commentnumber: 0,            // 댓글 수
+      thumbnail,                   // 썸네일 이미지
+      description: value[currentDay - 1] || '', // 여행 설명
+      created_at: new Date().toISOString(),    // 생성일
+      updated_at: new Date().toISOString(),    // 수정일
+    };
 
-      // 'addPost' 함수로 로컬 포스트 배열에 여행 계획 추가
-      addPost(requestData);
+    // 'addPost' 함수로 로컬 포스트 배열에 여행 계획 추가
+    addPost(requestData);
 
-      // 여행 일정 ID를 증가시켜서 다음 여행 계획의 ID를 준비
-      setItineraryId(prevId => prevId + 1);
+    // 여행 일정 ID를 증가시켜서 다음 여행 계획의 ID를 준비
+    setItineraryId(prevId => prevId + 1);
 
-      // editorValue를 localStorage에 저장
-      localStorage.setItem('editorValue', editorValue);
-      navigate(`/mytrip/${itineraryId}`, { state: { content: editorValue } }); // 페이지 이동 시 state로 전달
+    // editorValue를 localStorage에 저장
+    localStorage.setItem('editorValue', editorValue);
+    navigate(`/mytrip/${itineraryId}`, { state: { content: editorValue } }); // 페이지 이동 시 state로 전달
   };
 
   return (
@@ -383,7 +383,7 @@ export default function Editor({ onChange = () => { } }) {
 
       <EditorContainer>
         <MapContainer>
-          <Map markers={markers[currentDay - 1] || []}/>
+          <Map markers={markers[currentDay - 1] || []} />
         </MapContainer>
 
         <TabContainer>
@@ -418,13 +418,13 @@ export default function Editor({ onChange = () => { } }) {
 
       {/* Quill 에디터 */}
       <ReactQuill
-          style={{ width: "1400px", height: "500px", margin: "0 auto 150px"}}
-          theme="snow"
-          modules={modules}
-          formats={formats}
-          value={editorValue}
-          onChange={handleEditorChange}
-        />
+        style={{ width: "1400px", height: "500px", margin: "0 auto 150px" }}
+        theme="snow"
+        modules={modules}
+        formats={formats}
+        value={editorValue}
+        onChange={handleEditorChange}
+      />
     </div>
   );
 }

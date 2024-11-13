@@ -47,7 +47,7 @@ const Link = styled.span`
     }
 `;
 
-export default function Login() {
+export default function Login({ setIsAuthenticated }) {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
@@ -76,9 +76,10 @@ export default function Login() {
             // 아이디와 비밀번호가 로컬 데이터와 일치하는지 확인
             if (userId === mockUserId && password === mockPassword) {
                 // 로그인 성공 시 토큰 저장
-                localStorage.setItem('authToken', 'dummyToken');  // 실제로는 백엔드에서 받은 JWT 토큰을 저장
+                localStorage.setItem('authToken', 'dummyToken'); // 실제로는 백엔드에서 받은 JWT 토큰을 저장
+                setIsAuthenticated(true); // 로그인 성공 시 상태 업데이트
 
-                navigate('/');  // 로그인 성공 시 홈으로 이동
+                navigate('/'); // 로그인 성공 시 홈으로 이동
             } else {
                 openModal('아이디 또는 비밀번호가 일치하지 않습니다.');
             }
