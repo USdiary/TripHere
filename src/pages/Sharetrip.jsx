@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import Newtrip from './Newtrip';
-import { getPosts } from '../mockdata/mytripMockData';
 import Tags from '../components/Tags';
-
+import { getPosts } from '../mockdata/mytripMockData';
 // Styled Components 정의
 const Title = styled.h1`
   text-align: center;
@@ -159,60 +158,38 @@ const EmptyCard = styled.div`
 
 
 export default function Sharetrip() {
-    const [posts, setPosts] = useState(getPosts());
+    const [posts, setPosts] = useState(getPosts()); // Fetch initial posts
     const [activeButton, setActiveButton] = useState('popular');
-    const [page, setPage] = useState(1); // 페이지 상태 추가
-    const limit = 5; // 한 페이지에 보여줄 데이터 수
-    const offset = (page - 1) * limit; // 현재 페이지의 시작 index 계산
+    const [page, setPage] = useState(1); // Page state for pagination
+    const limit = 5;
+    const offset = (page - 1) * limit; // Pagination offset
     const navigate = useNavigate();
     const [isListView, setIsListView] = useState(false);
-    const userName = 10; // 사용자 이름을 설정
-    const [selectedButton, setSelectedButton] = useState('인기'); // 선택된 버튼을 추적하는 상태
+    const userName = 10; // Hardcoded user name for now
+    const [selectedButton, setSelectedButton] = useState('인기');
 
     const handleTripClick = (id) => {
-        // 여행 일정을 클릭하면 해당 ID의 상세 페이지로 이동
         const tripData = posts.find(post => post.id === id);
         if (tripData) {
-            navigate(`/details/${id}`, { state: { posts } }); // posts를 state로 전달
+            navigate(`/details/${id}`, { state: { posts } });
         }
     };
 
-    const [tags, setTags] = useState([]); // 빈 배열로 초기화
-
+    const [tags, setTags] = useState([]); // Initialize empty tags array
     const filteredPosts = selectedButton === '최신'
         ? posts.filter(post => post.소유자 === userName)
         : selectedButton === '인기'
             ? posts.filter(post => post.소유자 === userName)
             : posts;
 
-    const customStyles = {
-        overlay: {
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1500,   /* 헤더보다 위로 설정 */
-        },
-        content: {
-            width: "400px",
-            height: "500px",
-            borderRadius: "16px",
-            backgroundColor: "#fff",
-            position: 'relative',
-            inset: 'auto',
-            margin: '0 auto',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '10px',
-        }
-    };
+    useEffect(() => {
+        setPosts(getPosts());
+    }, []);
 
     return (
         <SharetripContainer>
             <NavBtnContainer>
-            <NavButton
+                <NavButton
                     selected={selectedButton === '인기'}
                     onClick={() => setSelectedButton('인기')}
                 >
@@ -226,62 +203,56 @@ export default function Sharetrip() {
                 </NavButton>
             </NavBtnContainer>
             <Title>여행 공유</Title>
-            {/* 리스트 또는 카드 형식의 콘텐츠가 렌더링 되는 부분 */}
+            {/* List or Card format rendering */}
             {isListView ? (
-                <>
-                    <div>
-                        <Index>
-                            <div className="title no">No</div>
-                            <div className="title max">제목</div>
-                            <div className="title min">여행지</div>
-                            <div className="title min">소유자</div>
-                            <div className="title min">날짜</div>
-                        </Index>
-                        {/* filteredPosts가 비어 있을 경우 Empty 메시지 표시 */}
-                        {filteredPosts.length === 0 ? (
-                            <EmptyList>
-                                여행 일정이 없습니다.
-                            </EmptyList>
-                        ) : (
-                            filteredPosts.slice(offset, offset + limit).map(({ id, no, 제목, 여행지, 소유자, 날짜, 아이콘 }) => (
-                                <Line key={id} onClick={() => handleTripClick(id)}>
-                                    <div className="list no">{no}</div>
-                                    <div className="list max">{제목}</div>
-                                    <div className="list min">
-                                        <Tags tags={Array.isArray(여행지) ? 여행지 : [여행지]} />
-                                    </div>
-                                    <div className="list min">{소유자}</div>
-                                    <div className="list min">{날짜}</div>
-                                </Line>
-                            ))
-                        )}
-                    </div>
-                </>
+                <div>
+                    <Index>
+                        <div className="title no">No</div>
+                        <div className="title max">제목</div>
+                        <div className="title min">여행지</div>
+                        <div className="title min">소유자</div>
+                        <div className="title min">날짜</div>
+                    </Index>
+                    {filteredPosts.length === 0 ? (
+                        <EmptyList>
+                            여행 일정이 없습니다.
+                        </EmptyList>
+                    ) : (
+                        filteredPosts.slice(offset, offset + limit).map(({ id, no, 제목, 여행지, 소유자, 날짜, 아이콘 }) => (
+                            <Line key={id} onClick={() => handleTripClick(id)}>
+                                <div className="list no">{no}</div>
+                                <div className="list max">{제목}</div>
+                                <div className="list min">
+                                    <Tags tags={Array.isArray(여행지) ? 여행지 : [여행지]} />
+                                </div>
+                                <div className="list min">{소유자}</div>
+                                <div className="list min">{날짜}</div>
+                            </Line>
+                        ))
+                    )}
+                </div>
             ) : (
-                <>
-                    <CardsContainer>
-                        {/* 카드 형식 콘텐츠 */}
-                        {/* filteredPosts가 비어 있을 경우 Empty 메시지 표시 */}
-                        {filteredPosts.length === 0 ? (
-                            <EmptyCard>
-                                여행 일정이 없습니다.
-                            </EmptyCard>
-                        ) : (
-                            filteredPosts.map((post) => (
-                                <Card
-                                    key={post.id}
-                                    img={post.썸네일}
-                                    title={post.제목}
-                                    date={post.날짜}
-                                    author={post.소유자}
-                                    comment={post.댓글}
-                                    likes={post.좋아요}
-                                    onClick={() => handleTripClick(post.id)}
-                                />
-                            ))
-                        )}
-                    </CardsContainer>
-                </>
+                <CardsContainer>
+                    {filteredPosts.length === 0 ? (
+                        <EmptyCard>
+                            여행 일정이 없습니다.
+                        </EmptyCard>
+                    ) : (
+                        filteredPosts.map((post) => (
+                            <Card
+                                key={post.itinerary_id}
+                                thumbnail={post.thumbnail}
+                                title={post.title}
+                                startdate={formatDate(post.startdate)}
+                                enddate={formatDate(post.enddate)}
+                                user_id={post.user_id}
+                                comment={post.commentnumber}
+                                likes={post.likenumber}
+                                onClick={() => handleTripClick(post.itinerary_id)}
+                            />
+                        ))
+                    )}
+                </CardsContainer>
             )}
         </SharetripContainer>
     );

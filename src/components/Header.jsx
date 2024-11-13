@@ -108,7 +108,7 @@ export const Nav = styled.nav`
   }
 `;
 
-export default function Header({ isAuthenticated }) {
+export default function Header({ isAuthenticated, setIsAuthenticated }) {
   const [viewDropdown, setViewDropdown] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -118,6 +118,7 @@ export default function Header({ isAuthenticated }) {
   const navigate = useNavigate();
 
   // 로그아웃 핸들러
+  /* 
   const handleLogout = async () => {
     try {
       const { status } = await logoutUser();
@@ -133,6 +134,13 @@ export default function Header({ isAuthenticated }) {
     } catch (error) {
       openModal("서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
     }
+  };
+  */
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken'); // 로컬 스토리지에서 토큰 삭제
+    setIsAuthenticated(false); // 로그인 상태를 로그아웃으로 변경
+    navigate('/login'); // 로그인 페이지로 이동
   };
 
   // 모달
