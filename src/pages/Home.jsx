@@ -234,6 +234,7 @@ export default function Home() {
             제목: '부산 3박 4일',
             여행지: ['부산'],
             소유자: 'seorin',
+            이미지: ImgBusan,
             날짜: '2024-09-13',
             썸네일: 'https://via.placeholder.com/300',
             댓글: '0',
@@ -242,10 +243,11 @@ export default function Home() {
         {
             id: 2,
             no: 2,
-            제목: '부산 1박 2일',
-            여행지: ['부산'],
-            소유자: 'seorin',
-            날짜: '2024-09-14',
+            제목: '제주 3박 4일',
+            여행지: ['제주'],
+            이미지: ImgJeju,
+            소유자: 'sieun',
+            날짜: '2024-11-14',
             썸네일: 'https://via.placeholder.com/300',
             댓글: '0',
             좋아요: '0',
@@ -255,7 +257,8 @@ export default function Home() {
             no: 3,
             제목: '강릉 2박 3일',
             여행지: ['강릉'],
-            소유자: 'seorin',
+            이미지: ImgGangneung,
+            소유자: 'mijin',
             날짜: '2024-09-15',
             썸네일: 'https://via.placeholder.com/300',
             댓글: '0',
@@ -314,11 +317,12 @@ export default function Home() {
                                 height="380px"
                                 key={card.id}
                                 heightImg="250px"
+                                thumbnail={card.이미지}
                                 img={card.썸네일}
                                 heightBody="60px"
                                 title={card.제목}
                                 date={card.날짜}
-                                author={card.소유자}
+                                user_id={card.소유자}
                                 comment={card.댓글}
                                 likes={card.좋아요}
                                 isHomePage={false} // 간단한 정보만 표시
