@@ -39,6 +39,7 @@ const StyledDropdown = styled.div `
     background-color: #fff;
     box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 0.1);
     border-radius: 4px;
+    z-index: 1000;
 `;
 
 const MenuStyle = styled.div `

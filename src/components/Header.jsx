@@ -78,7 +78,7 @@ const StyledDropdown = styled.div`
 `;
 
 const DropdownMenu = styled.div`
-  width: 100%;
+  width: 93%;
   font-size: 16px;
   padding: 20px 0 20px 20px;
   color: black;
