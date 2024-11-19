@@ -126,6 +126,7 @@ const TabContainer = styled.div`
   margin: 20px auto;
   background-color: #EEF5FF;
 `;
+
 const DayTabs = styled.div`
   display: flex;
   border-bottom: 1px solid #E0E0E0;
