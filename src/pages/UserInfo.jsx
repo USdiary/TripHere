@@ -6,6 +6,7 @@ import Modal from '../components/CommonModal';
 // import EditInfoInput from '../components/EditInfoInput';
 import defaultProfileImg from './img/card_img.png';
 import { useNavigate } from 'react-router-dom';
+import { checkPassword, getUserData, updateUserData,sendEmailVerificationCode, verifyCertificationCode } from '../api/Mypage/userinfoAPI';
 
 const HeaderStyle = styled.div`
     margin-top: 150px;
@@ -184,38 +185,44 @@ const userinfoData = styled.div`
 // ----------비밀번호 확인 전 Component----------
 function BeforeCheck ({ btnClick, userInfo }) {
     const { register, handleSubmit, formState: { errors }, setError } = useForm();
-    const [myPassword, setMyPassword] = useState(''); // 임시 비밀번호
-    const [profileImg, setProfileImg] = useState(defaultProfileImg); // 임시 프로필 사진
+    const [myPassword, setMyPassword] = useState('1111'); // 임시 비밀번호
+    const [profileImg, setProfileImg] = useState(userInfo?.profilephoto || defaultProfileImg); // 유저 프로필 사진
     // const [isSubmitted, setIsSubmitted] = useState(false); // 확인 버튼을 눌렀는지 확인하는 상태
 
-    const handleCheck = (data) => {
-        // setIsSubmitted(true); // 확인 버튼을 누른 이후에만 에러 메시지를 보여줌
-        if (data.passwordConfirm === myPassword) {
-            btnClick(true); // 비밀번호가 맞으면 개인정보 수정 컴포넌트로 이동
-        } else {
+    // '비밀번호를 통한 본인 확인' API 연결
+    const handleCheckPassword = async (data) => {
+        try {
+            const response = await checkPassword(data);
+            if (response.success) { // 서버의 응답에 따라 조건 처리
+                btnClick(true); // 비밀번호가 맞으면 개인정보 수정 컴포넌트로 이동
+            } else {
+                setError('passwordConfirm', {
+                    type: 'manual',
+                    message: '잘못된 비밀번호를 입력했습니다.',
+                });
+            }
+        } catch (error) {
+            console.error('Error "handleCheckPassword":', error);
             setError('passwordConfirm', {
                 type: 'manual',
-                message: '잘못된 비밀번호를 입력했습니다.',
+                message: '비밀번호 확인에 실패했습니다.',
             });
         }
     };
 
-    // '비밀번호를 통한 본인 확인' API 연결
-    const checkPassword = async (data) => {
-        const response = await fetch('https://yeogida.net/mypage/account', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json', // 요청 헤더 설정
-            },
-            body: JSON.stringify({ password: data.passwordConfirm }), // 요청 본문에 password 전달
-        });
-
-        // 서버 응답 처리
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return await response.json(); // 서버로부터의 응답 데이터 반환
-    };
+    // 임시로 입력한 비밀번호와 myPassword 값을 비교 (403 에러 해결되면 삭제)
+    // const handleCheckPassword = (data) => {
+    //     if (data.passwordConfirm === myPassword) {
+    //         // 비밀번호가 맞으면 개인정보 수정 컴포넌트로 이동
+    //         btnClick(true);
+    //     } else {
+    //         // 비밀번호가 틀리면 에러 메시지 출력
+    //         setError('passwordConfirm', {
+    //             type: 'manual',
+    //             message: '잘못된 비밀번호를 입력했습니다.',
+    //         });
+    //     }
+    // };
 
     return (
         <BeforeCheckStyle>
@@ -260,7 +267,7 @@ function BeforeCheck ({ btnClick, userInfo }) {
                 <Btn 
                     text='확인'
                     style={{marginLeft: 'auto', marginTop: '60px'}}
-                    onClick={handleSubmit(checkPassword)}
+                    onClick={handleSubmit(handleCheckPassword)}
                 />
 
             </CheckPassword>
@@ -270,13 +277,13 @@ function BeforeCheck ({ btnClick, userInfo }) {
 
 /* 프로필 사진 컴포넌트 */
 function ProfileImage({ userInfo, setUserInfo }) {
-    const [profileImg, setProfileImg] = useState(userInfo?.profilephoto || '');  // 초기값 설정
+    const [profileImg, setProfileImg] = useState(userInfo?.profilephoto || defaultProfileImg);  // 초기값 설정
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
 
     // userInfo 변경 시 profileImg 업데이트
     useEffect(() => {
-        setProfileImg(userInfo?.profilephoto || '');  // userInfo 변경되면 프로필 이미지 업데이트
+        setProfileImg(userInfo?.profilephoto || defaultProfileImg);  // userInfo 변경되면 프로필 이미지 업데이트
     }, [userInfo]);
 
     // 사진 파일 선택 함수
@@ -376,44 +383,41 @@ function EditInfo ({ userInfo, setUserInfo }) {
     // userInfo가 변경될 때마다 폼 필드에 값을 설정
     useEffect(() => {
         if (userInfo) {
+            setValue('password', userInfo.password)
+            setValue('PasswordConfirm', userInfo.checkpassword)
             setValue('email', userInfo.email); // 이메일 필드에 userInfo.email 값을 설정
             setValue('nickname', userInfo.nickname); // 닉네임 필드에 userInfo.nickname 값을 설정
         }
     }, [userInfo, setValue]);  // userInfo가 변경될 때 실행
 
-    // 이메일 체크 및 인증번호 요청 함수
-    const handleEmailCheck = async (event) => {
-        event.preventDefault();
+    // '(회원가입용) 메일로 인증번호 전송' API 연결
+    const handleEmailCheck = async () => {
         const emailValue = watch('email');
+        const nameValue = watch('userName'); // Assuming you have a name input field as well
         const isEmailValid = await trigger('email');
+        const isNameValid = await trigger('userName');
 
-        if (!isEmailValid || !emailValue) {
+        if (!isEmailValid || !emailValue || !isNameValid || !nameValue) {
             return;
         }
 
         setIsCheckingEmail(true);
 
-        // 이메일 중복 체크
-        const isDuplicate = await checkEmailDuplicate(emailValue);
+        try {
+            const result = await sendEmailVerificationCode(emailValue, nameValue); // 분리된 API 호출 함수 사용
+            setModalMessage(result.message);
 
-        if (isDuplicate) {
-            setModalMessage('이미 사용 중인 이메일입니다.');
+            if (result.success) {
+                setIsEmailDisabled(true);
+                setTimer(180);
+                setIsTimerRunning(true);
+                setShowCertificationInput(true); // 인증번호 입력 필드 표시
+            }
+
             setIsModalOpen(true); // 모달을 띄움
+        } finally {
             setIsCheckingEmail(false);
-            return; // 중복이면 인증번호 절차로 넘어가지 않도록 함
-        } else {
-            // 중복이 아니면 이메일 인증번호 전송 절차로 넘어감
-            setModalMessage(
-                '해당 이메일로 인증번호를 전송했습니다. 이메일을 확인해주세요.'
-            );
-            setIsEmailDisabled(true);
-            setTimer(180);
-            setIsTimerRunning(true);
-            setShowCertificationInput(true); // 인증번호 입력 필드 표시
-            setIsModalOpen(true); // 모달을 띄움
         }
-
-        setIsCheckingEmail(false);
     };
 
     // 타이머가 작동하는 동안 매초마다 시간을 감소시키는 useEffect
@@ -430,50 +434,41 @@ function EditInfo ({ userInfo, setUserInfo }) {
         }
     }, [timer, isTimerRunning]);
 
+    // 이메일 변경될 때 타이머와 버튼 상태 초기화시키는 useEffect
     useEffect(() => {
-        // 이메일 변경될 때 타이머와 버튼 상태 초기화
         setTimer(180);
         setIsTimerRunning(false);
         setShowCertificationInput(false);
         setIsEmailDisabled(false);
     }, [watch('email')]);
 
+    // '인증번호 검증' API 연결
     const handleCertificationCheck = async () => {
-        const enteredCode = watch('certificationNum');
-        const correctCode = '123456'; // 이곳에 실제 인증번호 로직 적용
+        const emailValue = watch('email');
+        const certificationNum = watch('certificationNum');
 
-        if (enteredCode === correctCode) {
-            setModalMessage('인증이 성공했습니다.');
-            setIsCertified(true);
-            setShowCertificationInput(false); // 인증번호 필드 숨기기
-            setIsTimerRunning(false); // 타이머 정지
-        } else {
+        try {
+            const result = await verifyCertificationCode(emailValue, certificationNum); // 분리된 API 호출 함수 사용
+            setModalMessage(result.message);
+            setIsModalOpen(true);
+
+            if (result.success) {
+                setIsCertified(true);
+            }
+        } catch (error) {
             setModalMessage('인증에 실패했습니다. 다시 시도해주세요.');
-            setIsCertified(false);
-            setShowCertificationInput(false);
-            setIsTimerRunning(false);
+            setIsModalOpen(true);
         }
-
-        setIsModalOpen(true);
-    };
-
-    // 가정된 API 호출 함수 (실제 API 로직으로 대체 필요)
-    const checkEmailDuplicate = async (email) => {
-        const dummyExistingEmails = [
-            'existingemail@domain.com',
-            'test3@example.com',
-        ];
-        return dummyExistingEmails.includes(email);
     };
 
     // 입력값 변경 핸들러
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setUserInfo((prev) => ({
-            ...prev,
-            [name]: value,  // 해당 필드만 업데이트
-        }));
-    };
+    // const handleInputChange = (e) => {
+    //     const { name, value } = e.target;
+    //     setUserInfo((prev) => ({
+    //         ...prev,
+    //         [name]: value,  // 해당 필드만 업데이트
+    //     }));
+    // };
 
     // 모달 닫기 함수
     const closeModal = () => {
@@ -697,14 +692,16 @@ function AfterCheck ({ userData }) {
     const navigate = useNavigate();
 
     // 초기 userInfo 상태를 null로 설정
-    const [userInfo, setUserInfo] = useState({
+    const [myUserData, setMyUserData] = useState({
         id: '',
         name: '',
-        phonenumber: '',
         birthdate: '',
+        phonenumber: '',
         email: '',
         nickname: '',
         profilephoto: '',
+        password: '',
+        checkpassword: '',
     });
 
     const [oneBtnModal, setOneBtnModal] = useState(false);
@@ -712,36 +709,52 @@ function AfterCheck ({ userData }) {
     const [modalTitle, setModalTitle] = useState('');
     const [modalChildren, setModalChildren] = useState('');
 
-    // userData가 변경될 때 userInfo 업데이트
+    // userData가 비어 있지 않을 때만 업데이트
     useEffect(() => {
-        // userData가 비어 있지 않을 때만 업데이트
-        if (userData && Object.keys(userData).length > 0) {
-            setUserInfo({
-                id: userData.id || '',
-                name: userData.name || '',
-                phonenumber: userData.phonenumber || '',
-                birthdate: userData.birthdate || '',
-                email: userData.email || '',
-                nickname: userData.nickname || '',
-                profilephoto: userData.profilephoto || '',
+        if (myUserData && Object.keys(myUserData).length > 0) {
+            setMyUserData({
+                id: myUserData.id || '',
+                name: myUserData.name || '',
+                phonenumber: myUserData.phonenumber || '',
+                birthdate: myUserData.birthdate || '',
+                email: myUserData.email || '',
+                nickname: myUserData.nickname || '',
+                profilephoto: myUserData.profilephoto || '',
             });
         }
     }, [userData]); // userData가 업데이트될 때마다 실행
 
-    // 컴포넌트가 다시 렌더링될 때 userInfo를 확인
+    // 컴포넌트가 다시 렌더링될 때 myUserData를 확인
     useEffect(() => {
-        console.log("userInfo after rendering: ", userInfo);
-    }, [userInfo]);  // userInfo가 변경될 때마다 실행
+        console.log("userInfo after rendering: ", myUserData);
+    }, [myUserData]);  // myUserData가 변경될 때마다 실행
 
-    // userData 또는 userInfo가 비어 있을 경우 로딩 처리
-    if (!userData || Object.keys(userData).length === 0 || !userInfo) {
-        return <p>Loading...</p>;  // userInfo가 로드되지 않으면 로딩 표시
-    }
+    // userData 또는 myUserData가 비어 있을 경우 로딩 처리
+    // if (!userData || Object.keys(userData).length === 0 || !myUserData) {
+    //     return <p style={{ textAlign: 'center' }}>Loading...</p>;
+    // }
 
-    // 수정 완료 Modal
-    const handleEditSubmit = () => {
-        setModalTitle('수정이 완료되었습니다.');
-        setOneBtnModal(true);
+    // 수정하기 버튼 클릭 시 '개인정보 수정' API 호출
+    const handleEditSubmit = async () => {
+        const updatedData = {
+            password: myUserData.password,
+            checkpassword: myUserData.checkpassword,
+            email: myUserData.email,
+            nickname: myUserData.nickname,
+            profilephoto: myUserData.profilephoto,
+        };
+
+        try {
+            const result = await updateUserData(updatedData);  // 분리된 API 호출
+            console.log('User data updated successfully:', result);
+
+            // 수정 완료 Modal 설정
+            setModalTitle('수정이 완료되었습니다.');
+            setOneBtnModal(true);
+        } catch (error) {
+            console.error('Error updating user data:', error);
+            // 에러 처리를 위한 추가 코드
+        }
     };
 
     // 탈퇴 요청 Modal
@@ -772,14 +785,14 @@ function AfterCheck ({ userData }) {
         <AfterCheckStyle>
             {/* 프로필 사진 */}
             <ProfileImage 
-                userInfo={userInfo} 
-                setUserInfo={setUserInfo} 
+                userInfo={myUserData} 
+                setUserInfo={setMyUserData} 
             />
 
             {/* 개인정보 수정 */}
             <EditInfo 
-                userInfo={userInfo} 
-                setUserInfo={setUserInfo} 
+                userInfo={myUserData} 
+                setUserInfo={setMyUserData} 
             />
 
             <Btn 
@@ -860,21 +873,17 @@ export default function UserInfo() {
 
     // 컴포넌트 마운트 시 사용자 데이터를 가져오는 함수
     useEffect(() => {
-        const getUserData = async () => {
+        const fetchUserData = async () => {
             try {
-                const response = await fetch('/data/userinfoMockData.json');  // mock data에서 사용자 정보 가져오기
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
+                const data = await getUserData(); // 분리된 API 호출 함수 사용
                 console.log('Fetched user data:', data);
-                setUserData(data[0]); // 첫 번째 사용자 데이터로 설정
+                setUserData(data); // 사용자 데이터로 설정
             } catch (error) {
-                console.error('Error fetching user data:', error);
+                console.error('Error "fetchUserData":', error);
             }
         };
 
-        getUserData();
+        fetchUserData();
     }, []); // 컴포넌트가 마운트될 때 한 번만 실행
 
     return (

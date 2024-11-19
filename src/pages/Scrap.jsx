@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import Card from '../components/ScrapCard';
 import cardImg from './img/card_img.png';
 import Modal from '../components/CommonModal';
+import RenameFolderModal from '../components/RenameFolderModal';
+import { getFolderData, fetchFolderAdd, fetchFolderDelete, fetchFolderNameUpdate, getScrapData, fetchScrapDelete } from '../api/Mypage/scrapAPI';
 
 const HeaderStyle = styled.div`
     margin-top: 150px;
@@ -82,97 +84,128 @@ const EmptyMessage = styled.div`
 
 // ---------------폴더 Component---------------
 function ScrapFolders({ onSelectFolder }) {
+    const [folderData, setFolderData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
     const [oneBtnModal, setOneBtnModal] = useState(false);
     const [twoBtnModal, setTwoBtnModal] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
     const [modalChildren, setModalChildren] = useState('');
     const [thisFolderName, setThisFolderName] = useState('');
+    const [folderIdToDelete, setFolderIdToDelete] = useState(null);
+    const [renameModalOpen, setRenameModalOpen] = useState(false);
+    const [folderIdToRename, setFolderIdToRename] = useState(null);
 
-    // 스크랩 폴더 상태 관리
-    // const [folderData, setFolderData] = useState([]);  // 폴더 데이터
-    // const [loading, setLoading] = useState(true);      // 로딩 상태 관리
-    // const [error, setError] = useState(null);          // 에러 상태 관리
+    // 스크랩 폴더 목록 조회 API 연결
+    useEffect(() => {
+        const fetchFolderData = async () => {
+            try {
+                setLoading(true);
+                const data = await getFolderData(); // 폴더 데이터 API 호출
+                setFolderData(data); // 폴더 데이터 상태 설정
+            } catch (err) {
+                setError(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchFolderData();
+    }, []);
+
+    // 새 폴더 생성 함수
+    const handleAddFolder = async () => {
+        const newFolderName = '새 폴더';
+        try {
+            const newFolder = await fetchFolderAdd(newFolderName); 
+            setFolderData([...folderData, newFolder]);
+        } catch (err) {
+            console.error('폴더 생성 중 오류 발생:', err);
+            // 오류 처리 로직 추가 가능
+        }
+    };
 
     // 폴더 삭제 요청 Modal
-    const handleDeleteFolder = (e, folderName) => {
-        e.stopPropagation(); // 부모 요소로의 이벤트 전파 중단
-        setThisFolderName(folderName);
+    const handleDeleteFolder = (e, folderId, folderName) => {
+        e.stopPropagation();
+        setThisFolderName(folderName); // 폴더 이름 설정
+        setFolderIdToDelete(folderId); // 삭제할 폴더 ID 설정
         setModalTitle('폴더를 삭제하시겠습니까?');
         setModalChildren('해당 폴더 속 일정 스크랩도 모두 삭제됩니다.');
-        setTwoBtnModal(true);
+        setTwoBtnModal(true); // 확인 모달 열기
     };
 
     // 폴더 삭제 완료 Modal
-    const completeDeleteFolder = () => {
-        console.log(`'${thisFolderName}' 폴더 삭제 완료`)
-        setModalTitle('폴더가 삭제되었습니다.');
-        setOneBtnModal(true);
+    const completeDeleteFolder = async () => {
+        if (folderIdToDelete) {
+            try {
+                await fetchFolderDelete(folderIdToDelete); // API 호출로 폴더 삭제
+                setFolderData(folderData.filter(folder => folder.folderId !== folderIdToDelete)); // 상태에서 삭제
+                setModalTitle('폴더가 삭제되었습니다.');
+                setOneBtnModal(true); // 삭제 완료 모달 열기
+            } catch (err) {
+                console.error('폴더 삭제 중 오류 발생:', err);
+            } finally {
+                setTwoBtnModal(false); // 확인 모달 닫기
+                setFolderIdToDelete(null); // 삭제할 폴더 ID 초기화
+            }
+        }
     };
 
-    // 폴더 이름 변경 Modal
-    const handleRenameFolder = () => {
-        console.log('폴더 이름 변경 코드 실행')
-    }
+    // 폴더 이름 변경 요청 Modal
+    const handleRenameFolder = (folderId) => {
+        setFolderIdToRename(folderId); // 변경할 폴더 ID 설정
+        setRenameModalOpen(true); // 폴더 이름 변경 모달 열기
+    };
 
-    // 임시 데이터 - 스크랩 폴더
-    const folderData = [
-        { folderId: 1, folderName: '부산' },
-        { folderId: 2, folderName: '제주도' },
-        { folderId: 3, folderName: '속초' },
-        { folderId: 4, folderName: '경주' },
-    ];
-
-    // 스크랩 폴더 목록 조회 API
-    // const getScrapFolderList = async () => {
-    //     try {
-    //         const response = await fetch('/mypage/scrap', {
-    //             method: 'GET',
-    //         });
-
-    //         console.log('Response:', response);  // 응답 확인
-
-    //         if (!response.ok) {
-    //             throw new Error(`HTTP error! status: ${response.status}`);
-    //         }
-
-    //         const data = await response.json();  // 서버로부터 받은 JSON 데이터를 자바스크립트 객체로 변환
-    //         console.log('Data:', data); 
-    //         setFolderData(data);  // 받은 데이터를 상태로 저장
-    //         setLoading(false);    // 로딩 완료
-    //     } catch (error) {
-    //         console.error('Error fetching folder data:', error);
-    //         setError(error.message);  // 에러 상태 저장
-    //         setLoading(false);
-    //     }
-    // };
-
-    // 컴포넌트가 마운트될 때 API 호출
-    // useEffect(() => {
-    //     getScrapFolderList();
-    // }, []);
-
-    // if (loading) return <p>로딩 중...</p>;  // 로딩 중일 때
-    // if (error) return <p>에러: {error}</p>; // 에러 발생 시
+    // 폴더 이름 변경 완료
+    const completeRenameFolder = async (newFolderName) => {
+        if (folderIdToRename) {
+            try {
+                await fetchFolderNameUpdate(folderIdToRename, newFolderName); // API 호출로 폴더 이름 변경
+                // 상태 업데이트
+                setFolderData(
+                    folderData.map(folder =>
+                        folder.folderId === folderIdToRename
+                            ? { ...folder, folderName: newFolderName }
+                            : folder
+                    )
+                );
+                setModalTitle('폴더 이름이 변경되었습니다.');
+                setOneBtnModal(true);
+            } catch (err) {
+                console.error('폴더 이름 변경 중 오류 발생:', err);
+            } finally {
+                setRenameModalOpen(false); // 이름 변경 모달 닫기
+                setFolderIdToRename(null);
+            }
+        }
+    };
 
     return (
         <>
             <ScrapContainer>
                 <ScrapMiniHeader>
                     <ScrapNum>Total {folderData.length}</ScrapNum>
-                    <ScrapBtn>새 폴더 생성</ScrapBtn>
+                    <ScrapBtn onClick={handleAddFolder}>새 폴더 생성</ScrapBtn>
                 </ScrapMiniHeader>
                 <ScrapCards>
-                    {folderData.map((folder) => (
-                        <Card
-                            key={folder.folderId}
-                            type='folder'
-                            img={cardImg}
-                            title={folder.folderName}
-                            onCardClick={() => onSelectFolder(folder.folderId, folder.folderName)}
-                            onDeleteFolder={(e) => handleDeleteFolder(e, folder.folderName)}
-                            onRenameFolder={(e) => handleRenameFolder(e, folder.folderName)}
-                        />
-                    ))}
+                    {folderData.length > 0 ? (
+                        folderData.map((folder) => (
+                            <Card
+                                key={folder.folderId}
+                                type='folder'
+                                img={cardImg}
+                                title={folder.folderName}
+                                onCardClick={() => onSelectFolder(folder.folderId, folder.folderName)}
+                                onDeleteFolder={(e) => handleDeleteFolder(e, folder.folderName)}
+                                onRenameFolder={(e) => handleRenameFolder(e, folder.folderId)}
+                            />
+                        ))
+                    ) : (
+                        <EmptyMessage>empty</EmptyMessage>
+                    )}
                 </ScrapCards>
             </ScrapContainer>
 
@@ -191,70 +224,87 @@ function ScrapFolders({ onSelectFolder }) {
                 type={2}
                 onConfirm={completeDeleteFolder}
             />
+            <RenameFolderModal
+                isOpen={renameModalOpen}
+                onRequestClose={() => setRenameModalOpen(false)}
+                onConfirm={completeRenameFolder}
+            />
         </>
     );
 }
 
 // ---------------스크랩 Component---------------
 function ScrapInFolder({ selectedFolderId, selectedFolderName, onBackToFolders }) {
+    const [scrapData, setScrapData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
     const [oneBtnModal, setOneBtnModal] = useState(false);
     const [twoBtnModal, setTwoBtnModal] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
     const [thisScrapName, setThisScrapName] = useState('');
-    
-    // 임시 데이터 - 스크랩
-    const scrapData = [
-        { folderId: 1, folderName: '부산' , scrapId: 1, scrapName: '부산 여행 1', addDate: '2024-05-13' },
-        { folderId: 1, folderName: '부산' , scrapId: 2, scrapName: '부산 여행 2', addDate: '2024-05-13' },
-        { folderId: 1, folderName: '부산' , scrapId: 3, scrapName: '부산 여행 3', addDate: '2024-05-13' },
-        { folderId: 1, folderName: '부산' , scrapId: 4, scrapName: '부산 여행 4', addDate: '2024-05-13' },
-        { folderId: 1, folderName: '부산' , scrapId: 5, scrapName: '부산 여행 5', addDate: '2024-05-13' },
-        { folderId: 1, folderName: '부산' , scrapId: 6, scrapName: '부산 여행 6', addDate: '2024-05-13' },
-        { folderId: 1, folderName: '부산' , scrapId: 7, scrapName: '부산 여행 7', addDate: '2024-05-13' },
-        { folderId: 1, folderName: '부산' , scrapId: 8, scrapName: '부산 여행 8', addDate: '2024-05-13' },
-        { folderId: 1, folderName: '부산' , scrapId: 9, scrapName: '부산 여행 9', addDate: '2024-05-13' },
-        { folderId: 1, folderName: '부산' , scrapId: 10, scrapName: '부산 여행 10', addDate: '2024-05-13' },
-        { folderId: 2, folderName: '제주도' , scrapId: 1, scrapName: '제주도 여행 1', addDate: '2024-05-23' },
-        { folderId: 2, folderName: '제주도' , scrapId: 2, scrapName: '제주도 여행 2', addDate: '2024-05-23' },
-        { folderId: 2, folderName: '제주도' , scrapId: 3, scrapName: '제주도 여행 3', addDate: '2024-05-23' },
-        { folderId: 2, folderName: '제주도' , scrapId: 4, scrapName: '제주도 여행 4', addDate: '2024-05-23' },
-    ];
+    const [scrapIdToDelete, setScrapIdToDelete] = useState(null);
 
-    const filteredScrap = scrapData.filter((scrap) => scrap.folderId === selectedFolderId);
+    // 특정 스크랩 폴더의 스크랩 목록 조회 api 연결
+    useEffect(() => {
+        const fetchScrapData = async () => {
+            try {
+                setLoading(true);
+                const data = await getScrapData(selectedFolderId); // 선택된 폴더의 스크랩 목록 가져오기
+                setScrapData(data);
+            } catch (err) {
+                setError(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchScrapData();
+    }, [selectedFolderId]);
 
     // 스크랩 삭제 요청 Modal
-    const handleDeleteScrap = (e, scrapName) => {
-        e.stopPropagation(); // 부모 요소로의 이벤트 전파 중단
+    const handleDeleteScrap = (scrapId, scrapName) => {
         setThisScrapName(scrapName);
+        setScrapIdToDelete(scrapId);
         setModalTitle('스크랩을 삭제하시겠습니까?');
         setTwoBtnModal(true);
     };
 
     // 스크랩 삭제 완료 Modal
-    const completeDeleteScrap = () => {
-        console.log(`'${thisScrapName}' 스크랩 삭제 완료`)
-        setModalTitle('스크랩이 삭제되었습니다.');
-        setOneBtnModal(true);
+    const completeDeleteScrap = async () => {
+        if (scrapIdToDelete !== null) {
+            try {
+                await fetchScrapDelete(selectedFolderId, scrapIdToDelete); // API 호출로 스크랩 삭제
+                setScrapData(scrapData.filter(scrap => scrap.scrapId !== scrapIdToDelete)); // 상태에서 삭제
+                setModalTitle('스크랩이 삭제되었습니다.');
+                setOneBtnModal(true); // 삭제 완료 모달 열기
+            } catch (err) {
+                console.error('스크랩 삭제 중 오류 발생:', err);
+            } finally {
+                setTwoBtnModal(false); // 확인 모달 닫기
+                setScrapIdToDelete(null); // 삭제할 스크랩 ID 초기화
+            }
+        }
     };
 
     return (
         <>
             <ScrapContainer>
                 <ScrapMiniHeader>
-                    <ScrapNum>Total {filteredScrap.length}</ScrapNum>
+                    <ScrapNum>Total {scrapData.length}</ScrapNum>
                     <FolderName>in {selectedFolderName}</FolderName>
                     <ScrapBtn onClick={onBackToFolders}>폴더 선택</ScrapBtn>
                 </ScrapMiniHeader>
                 <ScrapCards>
-                    {filteredScrap.length > 0 ? (
-                        filteredScrap.map((scrap) => (
+                    {scrapData.length > 0 ? (
+                        scrapData.map((scrap) => (
                             <Card
                                 key={scrap.scrapId}
                                 type='scrap'
                                 img={cardImg}
                                 title={scrap.scrapName}
                                 date={scrap.addDate}
-                                onDeleteScrap={(e) => handleDeleteScrap(e, scrap.scrapName)}
+                                onDeleteScrap={() => handleDeleteScrap(scrap.scrapId, scrap.scrapName)}
                             />
                         ))
                     ) : (

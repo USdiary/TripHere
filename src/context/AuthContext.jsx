@@ -49,12 +49,18 @@ export function AuthProvider({ children }) {
     const logout = async () => {
         try {
             console.log('서버 로그아웃 요청...');
-            await logoutUser(); // 서버 로그아웃 API 호출
+            const result = await logoutUser();
+            if (result.status === 200) {
+                console.log('클라이언트 로그아웃 처리.');
+                localStorage.removeItem('token');
+                setToken(null);
+                setIsLoggedIn(false);
+            } else {
+                console.warn('로그아웃 처리 중 서버 오류 발생:', result.error);
+            }
         } catch (error) {
-            console.warn('서버 로그아웃 중 오류 발생:', error);
-        } finally {
-            console.log('클라이언트 로그아웃 처리.');
-            localStorage.removeItem('token');
+            console.warn('로그아웃 요청 실패:', error);
+            localStorage.removeItem('token'); // 에러 발생 시에도 클라이언트 상태 초기화
             setToken(null);
             setIsLoggedIn(false);
         }

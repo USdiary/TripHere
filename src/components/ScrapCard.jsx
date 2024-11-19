@@ -57,7 +57,7 @@ const DeleteIcon = styled.img`
     filter: invert(100%) sepia(0%) saturate(2166%) hue-rotate(114deg) brightness(120%) contrast(76%);
 
     &:hover {
-        filter: invert(76%) sepia(19%) saturate(1253%) hue-rotate(314deg) brightness(97%) contrast(98%);
+        filter: invert(59%) sepia(93%) saturate(495%) hue-rotate(177deg) brightness(95%) contrast(89%);
     }
 `;
 
@@ -104,13 +104,13 @@ export default function Card({ type, img, title, date, onCardClick, onDeleteScra
     const handleDeleteFolder = (e) => {
         e.stopPropagation();
         setIsDropdownVisible(false); // 드롭다운 닫기
-        onDeleteFolder(e); // 폴더 삭제 함수 호출
+        onDeleteFolder(); // 폴더 삭제 함수 호출
     };
 
     const handleRenameFolder = (e) => {
         e.stopPropagation();
         setIsDropdownVisible(false); // 드롭다운 닫기
-        onRenameFolder(e); // 폴더 삭제 함수 호출
+        onRenameFolder(); // 폴더 삭제 함수 호출
     };
 
     return (
