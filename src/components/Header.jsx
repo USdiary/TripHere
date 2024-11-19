@@ -5,7 +5,7 @@ import logo from '../assets/yeogida_logo.png';
 import Bell from '../components/Bell';
 import Button from '../components/Btn';
 import CommonModal from '../components/CommonModal';
-import { logoutUser } from '../api/Logout/LogoutApi';
+import { useAuth } from '../context/AuthContext'; // AuthContext 사용
 
 const HeaderStyle = styled.div`
     position: fixed; /* 고정된 위치 설정 */
@@ -119,73 +119,61 @@ export const Nav = styled.nav`
 
 export default function Header() {
     const navigate = useNavigate();
+    const { isLoggedIn, logout } = useAuth();
     const [viewDropdown, setViewDropdown] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
     const [navigateTo, setNavigateTo] = useState('');
+    const [modalType, setModalType] = useState(1); // 기본 모달 타입 설정
 
-    // 토큰이 유효한지 확인하는 함수
-    const isTokenValid = (token) => {
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1])); // JWT payload 디코딩
-            const exp = payload.exp * 1000; // 만료 시간 (ms 단위)
-            return Date.now() < exp; // 현재 시간과 비교
-        } catch (error) {
-            console.error('토큰 파싱 중 오류 발생:', error);
-            return false;
-        }
+    // 로그아웃 확인 모달 열기
+    const handleLogout = () => {
+        setModalMessage('로그아웃 하시겠습니까?');
+        setModalType(2); // "예", "아니요" 버튼 표시
+        setIsModalOpen(true);
     };
 
-    // 로그인 여부를 토큰으로 확인
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-
-        if (token && isTokenValid(token)) {
-            setIsLoggedIn(true);
-        } else {
-            setIsLoggedIn(false);
-            localStorage.removeItem('token'); // 만료된 토큰 삭제
-        }
-    }, []);
-
-    const handleLogout = async () => {
+    // 로그아웃 로직
+    const confirmLogout = async () => {
         try {
-            const { status, error } = await logoutUser();
-
-            if (status === 200) {
-                console.log('로그아웃 성공: 사용자 세션이 삭제되었습니다.');
-                localStorage.removeItem('token');
-                setIsLoggedIn(false);
-                navigate('/'); // 로그아웃 성공 시 메인 페이지로 리다이렉트
-            } else if (status === 401) {
-                console.warn(
-                    '로그아웃 실패: 유효하지 않거나 만료된 토큰입니다.'
-                );
-                console.error(error);
-                openModal('유효하지 않은 세션입니다. 다시 로그인해 주세요.');
-            } else if (status === 500) {
-                console.error('로그아웃 실패: 서버 오류가 발생했습니다.');
-                console.error(error);
-                openModal(
-                    '서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
-                );
-            }
+            await logout(); // AuthContext의 logout 호출 (서버 로그아웃 포함)
+            navigate('/'); // 메인 페이지로 리다이렉트
         } catch (error) {
-            console.error('로그아웃 중 서버 오류가 발생했습니다:', error);
-            openModal('서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+            console.error('로그아웃 중 오류 발생:', error);
+            setModalMessage('서버 오류가 발생했습니다. 다시 시도해 주세요.');
+            setModalType(1);
+            setIsModalOpen(true); // 오류 메시지 모달 열기
         }
     };
 
     // 모달
-    const openModal = (message, navigateToPage = '') => {
-        setModalMessage(message);
-        setNavigateTo(navigateToPage);
-        setIsModalOpen(true);
+    const closeModal = () => setIsModalOpen(false);
+
+    const handleModalConfirm = () => {
+        if (modalType === 1 && navigateTo) {
+            // 타입 1: 페이지 전환
+            closeModal();
+            navigate(navigateTo); // 페이지 전환
+        } else if (modalType === 2) {
+            // 타입 2: 로그아웃
+            confirmLogout();
+        } else {
+            console.warn('정의되지 않은 modalType입니다:', modalType);
+        }
     };
 
-    const closeModal = () => setIsModalOpen(false);
+    const handleProtectedNavigation = (path) => {
+        console.log('로그인 상태:', isLoggedIn, '이동 경로:', path);
+        if (isLoggedIn) {
+            navigate(path);
+        } else {
+            setModalMessage('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
+            setModalType(1);
+            setNavigateTo('/login'); // 로그인 페이지로 리다이렉트
+            setIsModalOpen(true); // 모달 열기
+        }
+    };
 
     useEffect(() => {
         let timeout;
@@ -215,15 +203,13 @@ export default function Header() {
                     <NavBox>
                         <Nav>
                             <ul>
-                            <li onClick={() => {
-                                if (isLoggedIn) {
-                                    navigate('/mytrip');
-                                } else {
-                                    openModal('로그인이 필요합니다.', '/mytrip');
-                                }
-                            }}>
-                                나의여행
-                            </li>
+                                <li
+                                    onClick={() =>
+                                        handleProtectedNavigation('/mytrip')
+                                    }
+                                >
+                                    나의여행
+                                </li>
                                 <li
                                     onClick={() =>
                                         navigate('/shared-itineraries')
@@ -244,8 +230,8 @@ export default function Header() {
                                             <StyledDropdown>
                                                 <DropdownMenu
                                                     onClick={() =>
-                                                        navigate(
-                                                            '/mypage/userinfo'
+                                                        handleProtectedNavigation(
+                                                            '/mytrip/userinfo'
                                                         )
                                                     }
                                                 >
@@ -253,8 +239,8 @@ export default function Header() {
                                                 </DropdownMenu>
                                                 <DropdownMenu
                                                     onClick={() =>
-                                                        navigate(
-                                                            '/mypage/friend'
+                                                        handleProtectedNavigation(
+                                                            '/mytrip/friend'
                                                         )
                                                     }
                                                 >
@@ -262,8 +248,8 @@ export default function Header() {
                                                 </DropdownMenu>
                                                 <DropdownMenu
                                                     onClick={() =>
-                                                        navigate(
-                                                            '/mypage/scrap'
+                                                        handleProtectedNavigation(
+                                                            '/mytrip/scrap'
                                                         )
                                                     }
                                                 >
@@ -311,7 +297,8 @@ export default function Header() {
                         isOpen={isModalOpen}
                         onRequestClose={closeModal}
                         title={modalMessage}
-                        navigateTo={navigateTo}
+                        type={modalType} // 모달 타입 설정
+                        onConfirm={handleModalConfirm} // modalType에 따라 동작} // 확인 시 로그아웃 함수 실행
                     />
                 </HeaderContainer>
             </HeaderStyle>
