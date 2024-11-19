@@ -40,7 +40,7 @@ const StyledDatePickerWrapper = styled.div`
     }
 
     .react-datepicker__day:hover{
-        background-color: #59ABE6;
+        background-color: #0D90EE;
         color: black;
     }
 

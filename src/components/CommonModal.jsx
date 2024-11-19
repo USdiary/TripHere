@@ -62,7 +62,6 @@ const CommonModal = ({
             <div
                 style={{
                     fontSize: '22px',
-                    fontFamily: 'NanumGothic',
                     fontWeight: 'bold',
                     marginTop: '20px',
                     marginBottom: '15px',
@@ -75,9 +74,7 @@ const CommonModal = ({
             <div
                 style={{
                     fontSize: '16px',
-                    fontFamily: 'NanumGothic',
-                    marginTop: '10px',
-                    marginBottom: '50px',
+                    marginBottom: '40px',
                     textAlign: 'center',
                 }}
             >
@@ -92,7 +89,6 @@ const CommonModal = ({
                     borderRadius="10px"
                     borderColor="#59ABE6"
                     fontSize="18px"
-                    fontFamily="NanumGothic"
                     backgroundColor="#59ABE6"
                     hoverBackgroundColor="#0D90EE"
                     hoverBorderColor="#0D90EE"
@@ -114,7 +110,6 @@ const CommonModal = ({
                         height="50px"
                         borderRadius="10px"
                         fontSize="18px"
-                        fontFamily="NanumGothic"
                         backgroundColor="#59ABE6"
                         hoverBackgroundColor="#0D90EE"
                         text="확 인"
@@ -125,7 +120,6 @@ const CommonModal = ({
                         height="50px"
                         borderRadius="10px"
                         fontSize="18px"
-                        fontFamily="NanumGothic"
                         backgroundColor="#fff"
                         borderColor="#e9e9e9"
                         hoverBackgroundColor="#e9e9e9"

@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import CommonModal from '../components/CommonModal';
 import { loginUser } from '../api/Login/LoginApi';
+import { useAuth } from '../context/AuthContext';
 
 const LoginForm = styled.div`
     display: flex;
@@ -50,6 +51,7 @@ const Link = styled.span`
 
 export default function Login() {
     const navigate = useNavigate();
+    const { login } = useAuth(); // Context의 login 함수 가져오기
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
     const [navigateTo, setNavigateTo] = useState('');
@@ -81,9 +83,11 @@ export default function Login() {
                 );
 
                 if (response) {
-                    // 로그인 성공
-                    localStorage.setItem('token', responseData.token);
-                    navigate('/');
+                    // 로그인 성공 시 토큰 저장 및 상태 업데이트
+                    const token = responseData.token;
+                    // 서버에서 반환된 JWT 토큰
+                    login(token); // Context에 저장
+                    window.location.replace('/');
                 } else if (status === 401) {
                     // 인증 실패
                     openModal('아이디 또는 비밀번호가 일치하지 않습니다.');
