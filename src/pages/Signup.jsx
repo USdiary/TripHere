@@ -560,6 +560,7 @@ function SignUp() {
                         trigger('userName'); // 유효성 검사 트리거
                     }}
                     aria-invalid={errors.userName ? 'true' : 'false'}
+                    disabled={isCertified}
                 />
             </InputContainer>
             <ErrorStyled>
@@ -642,6 +643,7 @@ function SignUp() {
                         trigger('email'); // 유효성 검사 트리거
                     }}
                     aria-invalid={errors.email ? 'true' : 'false'}
+                    disabled={isCertified}
                 />
                 <BtnStyled>
                     <Button
@@ -657,7 +659,8 @@ function SignUp() {
                             !!errors.email ||
                             !!errors.userName ||
                             !watch('email') ||
-                            !watch('userName')
+                            !watch('userName') ||
+                            isCertified
                         }
                     />
                 </BtnStyled>
@@ -698,6 +701,7 @@ function SignUp() {
                             register('certificationNum').onChange(e); // React Hook Form에 업데이트
                             trigger('certificationNum'); // 유효성 검사 트리거
                         }}
+                        disabled={isCertified} // 인증 성공 시 비활성화
                     />
                     <BtnStyled>
                         <Button
@@ -708,7 +712,7 @@ function SignUp() {
                             text="인증번호 확인"
                             type="button"
                             onClick={handleCertificationCheck} // 매개변수 없이 함수 호출
-                            disabled={!watch('certificationNum')} // 인증번호가 없으면 비활성화
+                            disabled={!watch('certificationNum') || isCertified} // 인증번호가 없으면 비활성화
                         />
                     </BtnStyled>
                     {/* 타이머가 작동 중일 때만 타이머 표시 */}

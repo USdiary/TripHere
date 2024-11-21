@@ -14,7 +14,8 @@ export const checkIdDuplicate = async (userId) => {
         if (response.ok) {
             return { status: response.status, data: responseData };
         } else {
-            throw new Error(responseData.message || 'ID 중복 체크 실패');
+            // 상태 코드가 409일 경우에도 에러로 처리하지 않기
+            return { status: response.status, data: responseData }; // 정상적으로 데이터 반환
         }
     } catch (error) {
         console.error(`ID 중복 체크 오류: ${error.message}`);
@@ -38,7 +39,8 @@ export const checkPhoneDuplicate = async (phone) => {
         if (response.ok) {
             return { status: response.status, data: responseData };
         } else {
-            throw new Error(responseData.message || '전화번호 중복 체크 실패');
+            // 상태 코드가 409일 경우에도 에러로 처리하지 않기
+            return { status: response.status, data: responseData }; // 정상적으로 데이터 반환
         }
     } catch (error) {
         console.error(`전화번호 중복 체크 오류: ${error.message}`);
@@ -62,9 +64,8 @@ export const checkEmailDuplicate = async (email, userName) => {
         if (response.ok) {
             return { status: response.status, data: responseData };
         } else {
-            throw new Error(
-                responseData.message || '이메일 인증번호 요청 실패'
-            );
+            // 상태 코드가 409일 경우에도 에러로 처리하지 않기
+            return { status: response.status, data: responseData }; // 정상적으로 데이터 반환
         }
     } catch (error) {
         console.error(`이메일 인증번호 요청 오류: ${error.message}`);
@@ -88,7 +89,8 @@ export const verifyCertificationCode = async (email, code) => {
         if (response.ok) {
             return { status: response.status, data: responseData };
         } else {
-            throw new Error(responseData.message || '인증번호 확인 실패');
+            // 상태 코드가 409일 경우에도 에러로 처리하지 않기
+            return { status: response.status, data: responseData }; // 정상적으로 데이터 반환
         }
     } catch (error) {
         console.error(`인증번호 확인 오류: ${error.message}`);
@@ -111,7 +113,7 @@ export const signUp = async (userData) => {
         if (response.ok) {
             return { status: response.status, data: responseData };
         } else {
-            throw new Error(responseData.message || '회원가입 실패');
+            return { status: response.status, data: responseData }; // 정상적으로 데이터 반환
         }
     } catch (error) {
         console.error(`회원가입 오류: ${error.message}`);
