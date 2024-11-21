@@ -132,23 +132,26 @@ function SignUp() {
         setIsCheckingId(true);
 
         try {
-            const { status, data } = await checkIdDuplicate(userIdValue);
+            const { status, message, checkedId } = await checkIdDuplicate(
+                userIdValue
+            );
+
+            // 응답 데이터 및 상태 코드 출력
             console.log('ID 중복 확인 요청 : %s', userIdValue);
             const requestBody = { userId: userIdValue };
             console.log('요청 본문:', requestBody);
-
-            // 응답 데이터 및 상태 코드 출력
             console.log('ID 중복 확인 응답 상태 코드:', status);
-            console.log('ID 중복 확인 응답 데이터:', data);
 
             if (status === 200) {
                 // 성공적인 응답
-                setModalMessage(data.message || '사용할 수 있는 아이디입니다.');
+                setModalMessage(message || '사용할 수 있는 아이디입니다.');
                 setIsIdChecked(true); // 아이디 중복 체크 성공 시 상태 업데이트
+                console.log('사용 가능한 아이디:', checkedId); // 사용 가능한 아이디 출력
             } else if (status === 409) {
                 // 중복된 아이디일 경우
-                setModalMessage('이미 사용 중인 아이디입니다.');
+                setModalMessage(message || '이미 사용 중인 아이디입니다.');
                 setIsIdChecked(false);
+                console.log('중복된 아이디:', checkedId); // 중복된 아이디 출력
             } else {
                 setModalMessage('아이디 확인 중 문제가 발생했습니다.');
             }
@@ -186,21 +189,22 @@ function SignUp() {
         setIsCheckingPhone(true);
 
         try {
-            const { status, data } = await checkPhoneDuplicate(phoneValue);
-            console.log('전화번호 중복 확인 요청:', phoneValue);
+            const { status, message, checkedPhone } = await checkPhoneDuplicate(
+                phoneValue
+            );
+            console.log('전화번호 중복 확인 요청: %s', phoneValue);
             const requestBody = { phonenumber: phoneValue };
             console.log('요청 본문:', requestBody);
+            console.log('phone 중복 확인 응답 상태 코드:', status);
 
             if (status === 200) {
-                setModalMessage(
-                    data.message || '사용할 수 있는 전화번호입니다.'
-                );
+                setModalMessage(message || '사용할 수 있는 전화번호입니다.');
                 setIsPhoneChecked(true);
+                console.log('사용 가능한 전화번호:', phoneValue);
             } else if (status === 409) {
-                setModalMessage(
-                    data.message || '이미 사용 중인 전화번호입니다.'
-                );
+                setModalMessage(message || '이미 사용 중인 전화번호입니다.');
                 setIsPhoneChecked(false);
+                console.log('중복된 전화번호:', phoneValue);
             } else {
                 setModalMessage('전화번호 중복 확인 중 오류가 발생했습니다.');
             }
