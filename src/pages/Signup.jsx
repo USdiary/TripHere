@@ -132,28 +132,22 @@ function SignUp() {
         setIsCheckingId(true);
 
         try {
-            const response = await checkIdDuplicate(userIdValue);
+            const { status, data } = await checkIdDuplicate(userIdValue);
             console.log('ID 중복 확인 요청 : %s', userIdValue);
             const requestBody = { userId: userIdValue };
             console.log('요청 본문:', requestBody);
 
             // 응답 데이터 및 상태 코드 출력
-            console.log('ID 중복 확인 응답 상태 코드:', response.status);
-            console.log('ID 중복 확인 응답 데이터:', response);
+            console.log('ID 중복 확인 응답 상태 코드:', status);
+            console.log('ID 중복 확인 응답 데이터:', data);
 
-            if (response.status === 200) {
+            if (status === 200) {
                 // 성공적인 응답
-                setModalMessage(
-                    response.responseData.message ||
-                        '사용할 수 있는 아이디입니다.'
-                );
+                setModalMessage(data.message || '사용할 수 있는 아이디입니다.');
                 setIsIdChecked(true); // 아이디 중복 체크 성공 시 상태 업데이트
-            } else if (response.status === 409) {
+            } else if (status === 409) {
                 // 중복된 아이디일 경우
-                setModalMessage(
-                    response.responseData.message ||
-                        '이미 사용 중인 아이디입니다.'
-                );
+                setModalMessage('이미 사용 중인 아이디입니다.');
                 setIsIdChecked(false);
             } else {
                 setModalMessage('아이디 확인 중 문제가 발생했습니다.');
@@ -192,21 +186,19 @@ function SignUp() {
         setIsCheckingPhone(true);
 
         try {
-            const response = await checkPhoneDuplicate(phoneValue);
+            const { status, data } = await checkPhoneDuplicate(phoneValue);
             console.log('전화번호 중복 확인 요청:', phoneValue);
             const requestBody = { phonenumber: phoneValue };
             console.log('요청 본문:', requestBody);
 
-            if (response.status === 200) {
+            if (status === 200) {
                 setModalMessage(
-                    response.responseData.message ||
-                        '사용할 수 있는 전화번호입니다.'
+                    data.message || '사용할 수 있는 전화번호입니다.'
                 );
                 setIsPhoneChecked(true);
-            } else if (response.status === 409) {
+            } else if (status === 409) {
                 setModalMessage(
-                    response.responseData.message ||
-                        '이미 사용 중인 전화번호입니다.'
+                    data.message || '이미 사용 중인 전화번호입니다.'
                 );
                 setIsPhoneChecked(false);
             } else {
@@ -222,8 +214,8 @@ function SignUp() {
 
     // 이메일 체크 및 인증번호 요청 함수
     const handleEmailCheck = async () => {
-        const emailValue = getValues('email'); // 이메일 가져오기
-        const nameValue = getValues('userName'); // 이름 가져오기
+        const emailValue = watch('email'); // 이메일 가져오기
+        const nameValue = watch('userName'); // 이름 가져오기
 
         // 이메일과 이름 필드의 유효성 검사만 실행
         const isEmailValid = await trigger('email');
@@ -239,17 +231,21 @@ function SignUp() {
 
         try {
             console.log('이메일 중복 확인 요청:', emailValue, nameValue);
-            const response = await checkEmailDuplicate(emailValue, nameValue);
+            const { status, data } = await checkEmailDuplicate(
+                emailValue,
+                nameValue
+            );
 
-            if (response.status === 200) {
+            if (status === 200) {
                 setModalMessage(
-                    '이메일로 인증번호를 전송했습니다. 이메일을 확인해주세요.'
+                    data.message ||
+                        '이메일로 인증번호를 전송했습니다. 이메일을 확인해주세요.'
                 );
                 setIsEmailDisabled(true); // 이메일 필드 비활성화
                 setTimer(180); // 타이머 초기화
                 setIsTimerRunning(true); // 타이머 시작
                 setShowCertificationInput(true); // 인증번호 필드 표시
-            } else if (response.status === 409) {
+            } else if (status === 409) {
                 setModalMessage('기존에 회원가입한 이메일입니다.');
             }
         } catch (error) {
@@ -277,21 +273,20 @@ function SignUp() {
                 email: emailValue,
                 code: certificationCode,
             });
-            const response = await verifyCertificationCode(
+            const { status, data } = await verifyCertificationCode(
                 emailValue,
                 certificationCode
             );
 
-            if (response.status === 200 && response.responseData?.success) {
+            if (status === 200 && data?.success) {
                 setModalMessage('인증 성공 하였습니다.');
                 setIsCertified(true); // 인증 성공 상태 업데이트
-                setIsTimerRunning(false); // 타이머 중지
                 setTimer(0); // 타이머 초기화
-                setShowCertificationInput(false); // 인증번호 입력 필드 숨김
+                setIsTimerRunning(false); // 타이머 중지
+                setShowCertificationInput(false); // 인증번호 숨김
             } else {
                 setModalMessage(
-                    response.responseData?.message ||
-                        '인증에 실패했습니다. 다시 시도해주세요.'
+                    data?.message || '인증에 실패했습니다. 다시 시도해주세요.'
                 );
             }
         } catch (error) {
@@ -302,40 +297,41 @@ function SignUp() {
         }
     };
 
+    //타이머 로직
+    const resetCertificationState = () => {
+        setTimer(180); // 타이머 초기화
+        setIsTimerRunning(false); // 타이머 중지
+        setShowCertificationInput(false); // 인증번호 필드 숨김
+        setIsEmailDisabled(false); // 이메일 입력 활성화
+    };
+
     useEffect(() => {
-        // 타이머 동작: isTimerRunning이 true이고 timer가 0보다 크면 작동
+        if (!isCertified) {
+            resetCertificationState();
+        }
+    }, [watch('email')]);
+
+    useEffect(() => {
+        if (isCertified) {
+            resetCertificationState(); // 인증 성공 시에도 초기화
+        }
+    }, [isCertified]);
+
+    useEffect(() => {
         if (isTimerRunning && timer > 0) {
             const interval = setInterval(() => {
                 setTimer((prevTime) => prevTime - 1);
             }, 1000);
 
-            return () => clearInterval(interval); // 클린업 함수
+            return () => clearInterval(interval); // 클린업
         }
 
-        // 타이머 종료 처리: timer가 0이 되면 중지
-        if (timer === 0) {
-            setIsTimerRunning(false);
+        if (timer === 0 && isTimerRunning) {
             setModalMessage('인증 시간이 만료되었습니다. 다시 시도해주세요.');
             setIsModalOpen(true);
+            setIsTimerRunning(false); // 중복 실행 방지
         }
     }, [timer, isTimerRunning]);
-
-    useEffect(() => {
-        // 인증 성공 시 상태 초기화
-        if (isCertified) {
-            setShowCertificationInput(false); // 인증번호 필드 숨김
-            setIsTimerRunning(false); // 타이머 중지
-            setTimer(0); // 타이머 초기화
-        }
-    }, [isCertified]);
-
-    useEffect(() => {
-        // 이메일 변경 시 상태 초기화
-        setTimer(180);
-        setIsTimerRunning(false);
-        setShowCertificationInput(false);
-        setIsEmailDisabled(false);
-    }, [watch('email')]);
 
     //회원가입 처리
     const onSubmit = async (data) => {
@@ -385,20 +381,20 @@ function SignUp() {
         );
 
         try {
-            const response = await signUp(userData);
-            if (response.status === 200) {
-                console.log('회원가입 성공:', response.message);
+            const { status, data } = await signUp(userData);
+            if (status === 200) {
+                console.log('회원가입 성공:', data.message);
                 setModalMessage('회원가입이 완료되었습니다.');
                 setIsModalOpen(true);
                 setTimeout(() => {
                     window.location.replace('/login');
                 }, 1500); // 회원가입 성공 시 1.5초 딜에이 후 로그인 페이지로 이동
-            } else if (response.status === 409) {
-                console.log('이미 회원가입 된 정보', response.message);
+            } else if (status === 409) {
+                console.log('이미 회원가입 된 정보', data.message);
                 setModalMessage('이미 존재하는 회원정보 입니다.');
                 setIsModalOpen(true);
             } else {
-                throw new Error(response.message || '회원가입에 실패했습니다.');
+                throw new Error(data.message || '회원가입에 실패했습니다.');
             }
         } catch (error) {
             console.error('회원가입 오류:', error.message);
