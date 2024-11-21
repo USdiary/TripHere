@@ -14,26 +14,16 @@ export const checkIdDuplicate = async (userId) => {
 
         // API 명세서에 따른 응답 처리
         if (response.ok) {
-            // 성공(200)
-            return {
-                status: responseData.status, // 200
-                message: responseData.message, // "사용할 수 있는 아이디입니다."
-                checkedId: responseData.checkedId, // 사용 가능한 아이디
-            };
+            return { status: response.status, data: responseData };
         } else if (response.status === 409) {
-            // 실패(409) - 이미 사용 중인 아이디
-            return {
-                status: responseData.status, // 409
-                message: responseData.message, // "이미 사용 중인 아이디입니다."
-                checkedId: responseData.checkedId, // 사용 중인 아이디
-            };
+            // 중복된 아이디일 경우
+            return { status: response.status, data: responseData };
         } else {
-            // 서버 오류 또는 기타 오류 처리
             throw new Error(responseData.message || 'ID 중복 체크 실패');
         }
     } catch (error) {
         console.error(`ID 중복 체크 오류: ${error.message}`);
-        throw error; // 오류는 호출자에게 전달
+        throw error;
     }
 };
 
@@ -51,23 +41,14 @@ export const checkPhoneDuplicate = async (phone) => {
 
         const responseData = await response.json();
 
+        // API 명세서에 따른 응답 처리
         if (response.ok) {
-            // 성공(200)
-            return {
-                status: responseData.status, // 200
-                message: responseData.message, // "사용할 수 있는 아이디입니다."
-                checkedPhone: responseData.checkedPhone, // 사용 가능한 아이디
-            };
+            return { status: response.status, data: responseData };
         } else if (response.status === 409) {
-            // 실패(409) - 이미 사용 중인 아이디
-            return {
-                status: responseData.status, // 409
-                message: responseData.message, // "이미 사용 중인 아이디입니다."
-                checkedPhone: responseData.checkedPhone, // 사용 중인 아이디
-            };
+            // 중복된 전화번호일 경우
+            return { status: response.status, data: responseData };
         } else {
-            // 서버 오류 또는 기타 오류 처리
-            throw new Error(responseData.message || 'Phone 중복 체크 실패');
+            throw new Error(responseData.message || '전화번호 중복 체크 실패');
         }
     } catch (error) {
         console.error(`전화번호 중복 체크 오류: ${error.message}`);
