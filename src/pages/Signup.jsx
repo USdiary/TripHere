@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Button from '../components/Btn';
 import CommonModal from '../components/CommonModal';
@@ -91,9 +92,12 @@ function SignUp() {
         handleSubmit,
         watch, // watch 추가
         trigger,
+        getValues, // getValues를 추가로 가져옴
         formState: { isSubmitting, errors },
         control,
     } = useForm();
+
+    const navigate = useNavigate();
     const [isIdChecked, setIsIdChecked] = useState(false);
     const [isPhoneChecked, setIsPhoneChecked] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -128,29 +132,26 @@ function SignUp() {
         setIsCheckingId(true);
 
         try {
-            const response = await checkIdDuplicate(userIdValue);
+            const { status, message, checkedId } = await checkIdDuplicate(
+                userIdValue
+            );
+
+            // 응답 데이터 및 상태 코드 출력
             console.log('ID 중복 확인 요청 : %s', userIdValue);
             const requestBody = { userId: userIdValue };
             console.log('요청 본문:', requestBody);
+            console.log('ID 중복 확인 응답 상태 코드:', status);
 
-            // 응답 데이터 및 상태 코드 출력
-            console.log('ID 중복 확인 응답 상태 코드:', response.status);
-            console.log('ID 중복 확인 응답 데이터:', response);
-
-            if (response.status === 200) {
+            if (status === 200) {
                 // 성공적인 응답
-                setModalMessage(
-                    response.responseData.message ||
-                        '사용할 수 있는 아이디입니다.'
-                );
+                setModalMessage(message || '사용할 수 있는 아이디입니다.');
                 setIsIdChecked(true); // 아이디 중복 체크 성공 시 상태 업데이트
-            } else if (response.status === 409) {
+                console.log('사용 가능한 아이디:', checkedId); // 사용 가능한 아이디 출력
+            } else if (status === 409) {
                 // 중복된 아이디일 경우
-                setModalMessage(
-                    response.responseData.message ||
-                        '이미 사용 중인 아이디입니다.'
-                );
+                setModalMessage(message || '이미 사용 중인 아이디입니다.');
                 setIsIdChecked(false);
+                console.log('중복된 아이디:', checkedId); // 중복된 아이디 출력
             } else {
                 setModalMessage('아이디 확인 중 문제가 발생했습니다.');
             }
@@ -188,23 +189,22 @@ function SignUp() {
         setIsCheckingPhone(true);
 
         try {
-            const response = await checkPhoneDuplicate(phoneValue);
-            console.log('전화번호 중복 확인 요청:', phoneValue);
+            const { status, message, checkedPhone } = await checkPhoneDuplicate(
+                phoneValue
+            );
+            console.log('전화번호 중복 확인 요청: %s', phoneValue);
             const requestBody = { phonenumber: phoneValue };
             console.log('요청 본문:', requestBody);
+            console.log('phone 중복 확인 응답 상태 코드:', status);
 
-            if (response.status === 200) {
-                setModalMessage(
-                    response.responseData.message ||
-                        '사용할 수 있는 전화번호입니다.'
-                );
+            if (status === 200) {
+                setModalMessage(message || '사용할 수 있는 전화번호입니다.');
                 setIsPhoneChecked(true);
-            } else if (response.status === 409) {
-                setModalMessage(
-                    response.responseData.message ||
-                        '이미 사용 중인 전화번호입니다.'
-                );
+                console.log('사용 가능한 전화번호:', phoneValue);
+            } else if (status === 409) {
+                setModalMessage(message || '이미 사용 중인 전화번호입니다.');
                 setIsPhoneChecked(false);
+                console.log('중복된 전화번호:', phoneValue);
             } else {
                 setModalMessage('전화번호 중복 확인 중 오류가 발생했습니다.');
             }
@@ -218,12 +218,16 @@ function SignUp() {
 
     // 이메일 체크 및 인증번호 요청 함수
     const handleEmailCheck = async () => {
-        const emailValue = watch('email');
-        const nameValue = watch('userName');
+        const emailValue = watch('email'); // 이메일 가져오기
+        const nameValue = watch('userName'); // 이름 가져오기
+
+        // 이메일과 이름 필드의 유효성 검사만 실행
         const isEmailValid = await trigger('email');
         const isNameValid = await trigger('userName');
 
         if (!isEmailValid || !emailValue || !isNameValid || !nameValue) {
+            setModalMessage('올바른 이메일과 이름을 입력해주세요.');
+            setIsModalOpen(true);
             return;
         }
 
@@ -231,15 +235,22 @@ function SignUp() {
 
         try {
             console.log('이메일 중복 확인 요청:', emailValue, nameValue);
-            const response = await checkEmailDuplicate(emailValue, nameValue);
+            const { status, data } = await checkEmailDuplicate(
+                emailValue,
+                nameValue
+            );
 
-            setModalMessage(response.message);
-
-            if (response.status === 200) {
-                setIsEmailDisabled(true);
-                setTimer(180);
-                setIsTimerRunning(true);
-                setShowCertificationInput(true);
+            if (status === 200) {
+                setModalMessage(
+                    data.message ||
+                        '이메일로 인증번호를 전송했습니다. 이메일을 확인해주세요.'
+                );
+                setIsEmailDisabled(true); // 이메일 필드 비활성화
+                setTimer(180); // 타이머 초기화
+                setIsTimerRunning(true); // 타이머 시작
+                setShowCertificationInput(true); // 인증번호 필드 표시
+            } else if (status === 409) {
+                setModalMessage('기존에 회원가입한 이메일입니다.');
             }
         } catch (error) {
             setModalMessage(
@@ -251,75 +262,164 @@ function SignUp() {
         }
     };
 
-    // 타이머가 작동하는 동안 매초마다 시간을 감소시키는 useEffect
+    const handleCertificationCheck = async () => {
+        const emailValue = getValues('email'); // 이메일 가져오기
+        const certificationCode = getValues('certificationNum'); // 인증번호 가져오기
+
+        if (!certificationCode || !emailValue) {
+            setModalMessage('인증번호와 이메일을 확인해주세요.');
+            setIsModalOpen(true);
+            return;
+        }
+
+        try {
+            console.log('인증번호 확인 요청 데이터:', {
+                email: emailValue,
+                code: certificationCode,
+            });
+            const { status, data } = await verifyCertificationCode(
+                emailValue,
+                certificationCode
+            );
+
+            if (status === 200 && data?.success) {
+                setModalMessage('인증 성공 하였습니다.');
+                setIsCertified(true); // 인증 성공 상태 업데이트
+                setTimer(0); // 타이머 초기화
+                setIsTimerRunning(false); // 타이머 중지
+                setShowCertificationInput(false); // 인증번호 숨김
+            } else {
+                setModalMessage(
+                    data?.message || '인증에 실패했습니다. 다시 시도해주세요.'
+                );
+            }
+        } catch (error) {
+            console.error('인증번호 확인 오류:', error);
+            setModalMessage('인증에 실패했습니다. 서버를 확인해주세요.');
+        } finally {
+            setIsModalOpen(true);
+        }
+    };
+
+    //타이머 로직
+    const resetCertificationState = () => {
+        setTimer(180); // 타이머 초기화
+        setIsTimerRunning(false); // 타이머 중지
+        setShowCertificationInput(false); // 인증번호 필드 숨김
+        setIsEmailDisabled(false); // 이메일 입력 활성화
+    };
+
+    useEffect(() => {
+        if (!isCertified) {
+            resetCertificationState();
+        }
+    }, [watch('email')]);
+
+    useEffect(() => {
+        if (isCertified) {
+            resetCertificationState(); // 인증 성공 시에도 초기화
+        }
+    }, [isCertified]);
+
     useEffect(() => {
         if (isTimerRunning && timer > 0) {
             const interval = setInterval(() => {
                 setTimer((prevTime) => prevTime - 1);
             }, 1000);
 
-            return () => clearInterval(interval);
-        } else if (timer === 0) {
-            setIsTimerRunning(false);
-            setIsEmailDisabled(false); // 타이머 종료 시 버튼 활성화
+            return () => clearInterval(interval); // 클린업
+        }
+
+        if (timer === 0 && isTimerRunning) {
+            setModalMessage('인증 시간이 만료되었습니다. 다시 시도해주세요.');
+            setIsModalOpen(true);
+            setIsTimerRunning(false); // 중복 실행 방지
         }
     }, [timer, isTimerRunning]);
 
-    useEffect(() => {
-        // 이메일 변경될 때 타이머와 버튼 상태 초기화
-        setTimer(180);
-        setIsTimerRunning(false);
-        setShowCertificationInput(false);
-        setIsEmailDisabled(false);
-    }, [watch('email')]);
+    //회원가입 처리
+    const onSubmit = async (data) => {
+        const {
+            userId,
+            password,
+            passwordCheck,
+            userName,
+            phone,
+            email,
+            nickname,
+            birth,
+        } = data;
+        // 공백 제거 및 일치 여부 확인
+        const trimmedPassword =
+            typeof password === 'string' ? password.trim() : '';
+        const trimmedPasswordCheck =
+            typeof passwordCheck === 'string' ? passwordCheck.trim() : '';
 
-    const handleCertificationCheck = async (certificationNum) => {
-        try {
-            const response = await verifyCertificationCode(
-                watch('email'),
-                certificationNum
-            );
-            setModalMessage(response.message);
+        if (trimmedPassword !== trimmedPasswordCheck) {
+            setModalMessage('비밀번호가 일치하지 않습니다.');
             setIsModalOpen(true);
-        } catch (error) {
-            setModalMessage('인증에 실패했습니다. 다시 시도해주세요.');
-            setIsModalOpen(true);
+            return;
         }
-    };
 
-    // 회원가입 처리
-    const onSubmit = async (
-        userId,
-        password,
-        passwordCheck,
-        userName,
-        phone,
-        email,
-        nickName,
-        birth
-    ) => {
+        const formattedPhone = phone.replace(/\D/g, ''); // 숫자만 추출
+
         const userData = {
             id: userId,
-            password: password,
-            passwordCheck: passwordCheck,
+            password: trimmedPassword,
+            passwordCheck: trimmedPasswordCheck,
             name: userName,
-            phonenumber: phone,
+            phonenumber: formattedPhone,
             email: email,
-            nickName: nickName,
+            nickname: nickname,
             birth: birth,
         };
 
+        // 요청 데이터 확인용 로그
+        console.log('회원가입 요청 데이터:', userData);
+        console.log(
+            '데이터 타입 확인:',
+            Object.keys(userData).reduce((acc, key) => {
+                acc[key] = typeof userData[key];
+                return acc;
+            }, {})
+        );
+
         try {
-            const response = await signUp(userData);
-            if (response.success) {
-                console.log('회원가입 성공:', response.message);
-                // 성공 처리 (e.g., 모달 띄우기 등)
+            const { status, data } = await signUp(userData);
+            if (status === 200) {
+                console.log('회원가입 성공:', data.message);
+                setModalMessage('회원가입이 완료되었습니다.');
+                setIsModalOpen(true);
+                setTimeout(() => {
+                    window.location.replace('/login');
+                }, 1500); // 회원가입 성공 시 1.5초 딜에이 후 로그인 페이지로 이동
+            } else if (status === 409) {
+                console.log('이미 회원가입 된 정보', data.message);
+                setModalMessage('이미 존재하는 회원정보 입니다.');
+                setIsModalOpen(true);
+            } else {
+                throw new Error(data.message || '회원가입에 실패했습니다.');
             }
         } catch (error) {
             console.error('회원가입 오류:', error.message);
-            // 오류 처리 (e.g., 에러 메시지 모달 등)
+
+            if (error.message.includes('NetworkError')) {
+                setModalMessage(
+                    '네트워크 연결이 원활하지 않습니다. 다시 시도해주세요.'
+                );
+            } else {
+                setModalMessage(
+                    error.message || '알 수 없는 오류가 발생했습니다.'
+                );
+            }
+
+            setIsModalOpen(true);
         }
     };
+
+    //생년월일 유효성 설정
+    const today = new Date().toISOString().split('T')[0]; // 오늘 날짜
+    const minBirthDate = '1900-01-01'; // 최소 생년월일
 
     return (
         <FormContainer noValidate onSubmit={handleSubmit(onSubmit)}>
@@ -464,6 +564,7 @@ function SignUp() {
                         trigger('userName'); // 유효성 검사 트리거
                     }}
                     aria-invalid={errors.userName ? 'true' : 'false'}
+                    disabled={isCertified}
                 />
             </InputContainer>
             <ErrorStyled>
@@ -546,6 +647,7 @@ function SignUp() {
                         trigger('email'); // 유효성 검사 트리거
                     }}
                     aria-invalid={errors.email ? 'true' : 'false'}
+                    disabled={isCertified}
                 />
                 <BtnStyled>
                     <Button
@@ -561,7 +663,8 @@ function SignUp() {
                             !!errors.email ||
                             !!errors.userName ||
                             !watch('email') ||
-                            !watch('userName')
+                            !watch('userName') ||
+                            isCertified
                         }
                     />
                 </BtnStyled>
@@ -573,24 +676,36 @@ function SignUp() {
                 )}
             </ErrorStyled>
             {/* 인증번호 */}
-            {showCertificationInput && (
+            {showCertificationInput && !isCertified && (
                 <InputContainer>
                     <Label></Label>
 
                     <InputField
                         id="certificationNum"
-                        type="tel"
+                        type="text"
                         placeholder="인증번호 6자리를 입력해주세요."
                         {...register('certificationNum', {
-                            maxLength: { value: 6 },
+                            required: '인증번호를 입력해주세요.',
+                            maxLength: {
+                                value: 6,
+                                message: '6자리 인증번호를 입력해주세요.',
+                            },
+                            validate: {
+                                isNumber: (value) =>
+                                    /^[0-9]+$/.test(value) ||
+                                    '숫자만 입력 가능합니다.',
+                            },
                         })}
                         onChange={(e) => {
-                            register('certificationNum').onChange(e);
+                            // 항상 문자열로 처리
+                            e.target.value = e.target.value.replace(
+                                /[^0-9]/g,
+                                ''
+                            ); // 숫자만 허용
+                            register('certificationNum').onChange(e); // React Hook Form에 업데이트
                             trigger('certificationNum'); // 유효성 검사 트리거
                         }}
-                        aria-invalid={
-                            errors.certificationNum ? 'true' : 'false'
-                        }
+                        disabled={isCertified} // 인증 성공 시 비활성화
                     />
                     <BtnStyled>
                         <Button
@@ -599,9 +714,9 @@ function SignUp() {
                             borderRadius="10px"
                             fontSize="20px"
                             text="인증번호 확인"
-                            type="button" // 버튼 타입을 submit에서 button으로 변경
-                            onClick={handleCertificationCheck}
-                            disabled={!watch('certificationNum')}
+                            type="button"
+                            onClick={handleCertificationCheck} // 매개변수 없이 함수 호출
+                            disabled={!watch('certificationNum') || isCertified} // 인증번호가 없으면 비활성화
                         />
                     </BtnStyled>
                     {/* 타이머가 작동 중일 때만 타이머 표시 */}
@@ -620,22 +735,22 @@ function SignUp() {
                 </Label>
 
                 <InputField
-                    id="nickName"
+                    id="nickname"
                     type="text"
                     placeholder="닉네임"
-                    {...register('nickName', {
+                    {...register('nickname', {
                         required: '닉네임은 필수 입력입니다.',
                     })}
                     onChange={(e) => {
-                        register('nickName').onChange(e);
-                        trigger('nickName'); // 유효성 검사 트리거
+                        register('nickname').onChange(e);
+                        trigger('nickname'); // 유효성 검사 트리거
                     }}
-                    aria-invalid={errors.nickName ? 'true' : 'false'}
+                    aria-invalid={errors.nickname ? 'true' : 'false'}
                 />
             </InputContainer>
             <ErrorStyled>
-                {errors.nickName && (
-                    <ErrorMessage>{errors.nickName.message}</ErrorMessage>
+                {errors.nickname && (
+                    <ErrorMessage>{errors.nickname.message}</ErrorMessage>
                 )}
             </ErrorStyled>
 
@@ -654,6 +769,11 @@ function SignUp() {
                         pattern: {
                             value: /^\d{4}-\d{2}-\d{2}$/,
                             message: '유효한 생년월일을 입력해주세요.',
+                        },
+                        validate: {
+                            inValidRange: (value) =>
+                                (value >= minBirthDate && value <= today) ||
+                                '1900-01-01 ~ 오늘 날짜 사이여야 합니다.',
                         },
                     })}
                     onChange={(e) => {

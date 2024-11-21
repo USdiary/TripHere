@@ -158,7 +158,7 @@ const EmptyCard = styled.div`
 
 
 export default function Sharetrip() {
-    const [posts, setPosts] = useState();
+    const [posts, setPosts] = useState([]); // 빈 배열로 초기화
     const [activeButton, setActiveButton] = useState('popular');
     const [page, setPage] = useState(1); // 페이지 상태 추가
     const limit = 5; // 한 페이지에 보여줄 데이터 수
@@ -167,22 +167,24 @@ export default function Sharetrip() {
     const [isListView, setIsListView] = useState(false);
     const userName = 10; // 사용자 이름을 설정
     const [selectedButton, setSelectedButton] = useState('인기'); // 선택된 버튼을 추적하는 상태
-
-    const handleTripClick = (id) => {
-        // 여행 일정을 클릭하면 해당 ID의 상세 페이지로 이동
-        const tripData = posts.find(post => post.id === id);
-        if (tripData) {
-            navigate(`/details/${id}`, { state: { posts } }); // posts를 state로 전달
-        }
-    };
-
     const [tags, setTags] = useState([]); // 빈 배열로 초기화
 
+    // 데이터 필터링
     const filteredPosts = selectedButton === '최신'
         ? posts.filter(post => post.소유자 === userName)
         : selectedButton === '인기'
             ? posts.filter(post => post.소유자 === userName)
             : posts;
+
+    // 여행 상세 페이지로 이동
+    const handleTripClick = (id) => {
+        const tripData = posts.find(post => post.id === id);
+        if (tripData) {
+            navigate(`/details/${id}`, { state: { post: tripData } }); // 상세 데이터 전달
+        } else {
+            alert('해당 여행 데이터를 찾을 수 없습니다.');
+        }
+    };
 
     const customStyles = {
         overlay: {
@@ -211,7 +213,7 @@ export default function Sharetrip() {
     return (
         <SharetripContainer>
             <NavBtnContainer>
-            <NavButton
+                <NavButton
                     selected={selectedButton === '인기'}
                     onClick={() => setSelectedButton('인기')}
                 >
@@ -225,6 +227,7 @@ export default function Sharetrip() {
                 </NavButton>
             </NavBtnContainer>
             <Title>여행 공유</Title>
+
             {/* 리스트 또는 카드 형식의 콘텐츠가 렌더링 되는 부분 */}
             {isListView ? (
                 <>
@@ -238,11 +241,9 @@ export default function Sharetrip() {
                         </Index>
                         {/* filteredPosts가 비어 있을 경우 Empty 메시지 표시 */}
                         {filteredPosts.length === 0 ? (
-                            <EmptyList>
-                                여행 일정이 없습니다.
-                            </EmptyList>
+                            <EmptyList>여행 일정이 없습니다.</EmptyList>
                         ) : (
-                            filteredPosts.slice(offset, offset + limit).map(({ id, no, 제목, 여행지, 소유자, 날짜, 아이콘 }) => (
+                            filteredPosts.slice(offset, offset + limit).map(({ id, no, 제목, 여행지, 소유자, 날짜 }) => (
                                 <Line key={id} onClick={() => handleTripClick(id)}>
                                     <div className="list no">{no}</div>
                                     <div className="list max">{제목}</div>
@@ -260,13 +261,10 @@ export default function Sharetrip() {
                 <>
                     <CardsContainer>
                         {/* 카드 형식 콘텐츠 */}
-                        {/* filteredPosts가 비어 있을 경우 Empty 메시지 표시 */}
                         {filteredPosts.length === 0 ? (
-                            <EmptyCard>
-                                여행 일정이 없습니다.
-                            </EmptyCard>
+                            <EmptyCard>여행 일정이 없습니다.</EmptyCard>
                         ) : (
-                            filteredPosts.map((post) => (
+                            filteredPosts.slice(offset, offset + limit).map((post) => (
                                 <Card
                                     key={post.id}
                                     img={post.썸네일}
