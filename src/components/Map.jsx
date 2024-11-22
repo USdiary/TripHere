@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import useGeolocation from '../assets/hooks/useGeolocation';
+import { handleSearch as fetchSearchResults } from '../api/Mytrip/Itineraries'; // handleSearch를 fetchSearchResults로 가져옴
+import { usePlaces } from '../pages/Mytrip/PlaceContext';
 
 const SearchContainer = styled.div`
   max-width: 950px;
@@ -41,7 +43,7 @@ const SearchResultsContainer = styled.div`
 const SearchResults = styled.ul`
   margin: 0;
   padding: 0;
-  overflow-y: auto; /* 스크롤 추가 */
+  overflow-y: auto;
   list-style: none;
 `;
 
@@ -123,13 +125,14 @@ const MapContainer = styled.div`
   box-sizing: border-box;
 `;
 
-function Map() {
+function Map({ days, activeDay, setActiveDay, onAddLocation }) {
   const mapRef = useRef(null);
   const { naver } = window;
   const { currentMyLocation } = useGeolocation();
   const [searchResults, setSearchResults] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [markers, setMarkers] = useState([]); // 마커 상태 추가
+  const [markers, setMarkers] = useState([]);
+  const { addPlace } = usePlaces();
 
   useEffect(() => {
     if (currentMyLocation.lat !== 0 && currentMyLocation.lng !== 0) {
@@ -151,37 +154,83 @@ function Map() {
     }
   }, [currentMyLocation]);
 
-  // 예시 데이터 (부산 지역의 일부 장소)
-  const exampleSearchResults = [
-    { title: '부산 타워', address: '부산광역시 중구', lat: 35.1543, lng: 129.0603 },
-    { title: '부산 광안리 해수욕장', address: '부산광역시 수영구', lat: 35.1595, lng: 129.1395 },
-    { title: '부산 해운대', address: '부산광역시 해운대구', lat: 35.1587, lng: 129.1605 },
-    { title: '부산 자갈치 시장', address: '부산광역시 중구', lat: 35.0951, lng: 129.0301 },
-    { title: '부산 국제시장', address: '부산광역시 중구', lat: 35.0997, lng: 129.0312 },
-  ];
+  const handleSearch = async () => {
+    if (!searchQuery) return;
 
-  const createCustomMarker = (index) => {
-    return `
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42" fill="none">
-        <path d="M16 40C16 40 31 26.4348 31 16.2609C31 7.83252 24.2843 1 16 1C7.71573 1 1 7.83252 1 16.2609C1 26.4348 16 40 16 40Z" fill="black"/>
-        <path d="M20.7923 15.6253C20.7923 18.3177 18.647 20.5003 16.0006 20.5003C13.3542 20.5003 11.2089 18.3177 11.2089 15.6253C11.2089 12.9329 13.3542 10.7503 16.0006 10.7503C18.647 10.7503 20.7923 12.9329 20.7923 15.6253Z" fill="black"/>
-        <path d="M16 40C16 40 31 26.4348 31 16.2609C31 7.83252 24.2843 1 16 1C7.71573 1 1 7.83252 1 16.2609C1 26.4348 16 40 16 40Z" stroke="black" stroke-width="2"/>
-        <path d="M20.7923 15.6253C20.7923 18.3177 18.647 20.5003 16.0006 20.5003C13.3542 20.5003 11.2089 18.3177 11.2089 15.6253C11.2089 12.9329 13.3542 10.7503 16.0006 10.7503C18.647 10.7503 20.7923 12.9329 20.7923 15.6253Z" stroke="black" stroke-width="2"/>
-        <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" style="fill: #FFF; font-family: NanumGothic; font-size: 20px; font-weight: 600;">${index}</text>
-      </svg>
-    `;
+    try {
+      const results = await fetchSearchResults(searchQuery); // API 함수 호출
+      setSearchResults(results); // 검색 결과 상태 업데이트
+
+      // 키워드 기반 장소 이동 처리
+      const matchedLocation = Object.keys(locationMapping).find((key) =>
+        searchQuery.toLowerCase().includes(key.toLowerCase())
+      );
+
+      if (matchedLocation && mapRef.current) {
+        const { lat, lng } = locationMapping[matchedLocation];
+        const newLatLng = new naver.maps.LatLng(lat, lng);
+
+        mapRef.current.setCenter(newLatLng);
+        mapRef.current.setZoom(13); // 적절한 확대 수준
+      }
+    } catch (error) {
+      console.error('검색 중 오류 발생:', error);
+    }
   };
 
+  const locations = [
+      { name: '부산', lat: 35.1796, lng: 129.0756 },
+      { name: '서울', lat: 37.5665, lng: 126.9780 },
+      { name: '대구', lat: 35.8722, lng: 128.6025 },
+      { name: '제주', lat: 33.4996, lng: 126.5312 },
+      { name: '인천', lat: 37.4563, lng: 126.7052 },
+      { name: '광주', lat: 35.1595, lng: 126.8526 },
+      { name: '대전', lat: 36.3504, lng: 127.3845 },
+      { name: '울산', lat: 35.5373, lng: 129.3114 },
+      { name: '수원', lat: 37.2636, lng: 127.0286 },
+      { name: '창원', lat: 35.2288, lng: 128.6812 },
+      { name: '포항', lat: 36.0194, lng: 129.3422 },
+      { name: '천안', lat: 36.8210, lng: 127.1448 },
+      { name: '김해', lat: 35.2321, lng: 128.8828 },
+      { name: '전주', lat: 35.8244, lng: 127.1500 },
+      { name: '강릉', lat: 37.7517, lng: 128.8760 },
+      { name: '여수', lat: 34.7606, lng: 127.6628 },
+      { name: '포천', lat: 37.9000, lng: 127.2000 },
+      { name: '안산', lat: 37.3215, lng: 126.8290 },
+      { name: '남양주', lat: 37.6354, lng: 127.2115 },
+      { name: '경주', lat: 35.8575, lng: 129.2242 },
+  ];
+
+  // 필요할 때 동적으로 생성
+  const locationMapping = locations.reduce((acc, loc) => {
+    acc[loc.name] = { lat: loc.lat, lng: loc.lng };
+    return acc;
+  }, {});  
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  // handleAddMarker 함수
   const handleAddMarker = (result) => {
     const newMarker = {
       ...result,
-      index: markers.length + 1, // 마커 번호는 현재 상태의 길이에 따라 순차적으로 증가
+      index: markers.length + 1,  // 새로운 마커의 인덱스
     };
-    setMarkers([...markers, newMarker]); // 새로운 마커 상태에 추가
+    setMarkers([...markers, newMarker]);  // 마커 리스트에 새로운 마커 추가
+    addPlace(newMarker);  // 장소 데이터를 context에 저장
+  };
+
+  const handleSelectLocation = (place) => {
+    console.log('선택된 장소:', place);
+    
+    // 장소를 마커로 추가
+    handleAddMarker(place);
   };
 
   useEffect(() => {
-    // 지도에 마커 추가
     if (mapRef.current) {
       markers.forEach((marker) => {
         const position = new naver.maps.LatLng(marker.lat, marker.lng);
@@ -189,7 +238,12 @@ function Map() {
           position,
           map: mapRef.current,
           icon: {
-            content: createCustomMarker(marker.index),
+            content: `
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42" fill="none">
+                <path d="M16 40C16 40 31 26.4348 31 16.2609C31 7.83252 24.2843 1 16 1C7.71573 1 1 7.83252 1 16.2609C1 26.4348 16 40 16 40Z" fill="black"/>
+                <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" style="fill: #FFF; font-family: NanumGothic; font-size: 20px; font-weight: 600;">${marker.index}</text>
+              </svg>
+            `,
             size: new naver.maps.Size(32, 42),
             anchor: new naver.maps.Point(16, 42),
           },
@@ -198,65 +252,6 @@ function Map() {
     }
   }, [markers]);
 
-  const handleSearch = async () => {
-    if (!searchQuery) return;
-
-    // 예시 검색 로직
-    const filteredResults = exampleSearchResults.filter((item) =>
-      item.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    setSearchResults(filteredResults);
-
-    // 검색어에 '부산'이 포함되면, 부산의 중심으로 지도를 이동
-  if (searchQuery.toLowerCase().includes("부산") && mapRef.current) {
-    const busanLatLng = new naver.maps.LatLng(35.1796, 129.0756); // 부산의 위도와 경도
-    mapRef.current.setCenter(busanLatLng);
-    mapRef.current.setZoom(13); // 확대 수준 조정
-  }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
-  // const handleSearch = async () => {
-  //   if (!searchQuery) return; // 검색어가 없으면 함수 종료
-
-  //   try {
-  //       console.log('장소 검색 요청 시작'); // 요청 시작 로그
-  //       console.log(`검색어: ${searchQuery}`); // 검색어 확인
-
-  //       const response = await fetch(`https://yeogida.net/api/places/search?query=${encodeURIComponent(searchQuery)}`);
-        
-  //       if (response.status === 404) {
-  //           console.error('검색 결과가 없습니다.');
-  //           setSearchResults([]); // 빈 결과를 표시
-  //           return;
-  //       }
-
-  //       if (!response.ok) {
-  //           throw new Error('네트워크 응답이 실패했습니다.');
-  //       }
-
-  //       const data = await response.json();
-  //       console.log('검색된 장소 결과:', data);
-
-  //       setSearchResults((data || []).map((item) => ({
-  //           title: item.title,
-  //           address: item.roadAddress,
-  //           lat: item.mapx,
-  //           lng: item.mapy,
-  //       })));
-
-  //       console.log('장소 검색 완료');
-  //   } catch (error) {
-  //       console.error('장소 검색 중 오류 발생:', error); // 오류 발생 로그
-  //   }
-  // };
-    
   return (
     <>
       <SearchContainer>
@@ -272,25 +267,23 @@ function Map() {
 
       <SearchResultsContainer>
         {searchResults.length > 0 ? (
-            <SearchResults>
-              {searchResults.map((result, index) => (
-                <SearchResultItem key={index} onClick={() => handleAddMarker(result)}>
-                  <div className="text-container">
-                    <span className="title">{result.title}</span>
-                    <span className="address">{result.address}</span>
-                  </div>
-                  <button className="add-button" onClick={() => handleAddMarker(result)}>
-                    + 추가
-                  </button>
-                </SearchResultItem>
-              ))}
-            </SearchResults>
+          <SearchResults>
+            {searchResults.map((result, index) => (
+              <SearchResultItem key={index}>
+                <div className="text-container">
+                  <span className="title">{result.title}</span>
+                  <span className="address">{result.address}</span>
+                </div>
+                <button className="add-button" onClick={() => handleSelectLocation(result)}>
+                  + 추가
+                </button>
+              </SearchResultItem>
+            ))}
+          </SearchResults>
         ) : (
-          <NoResultsMessage>
-            원하는 장소를 검색해보세요.
-          </NoResultsMessage>
+          <NoResultsMessage>원하는 장소를 검색해보세요.</NoResultsMessage>
         )}
-        <MapContainer id="map" /> 
+        <MapContainer id="map" />
       </SearchResultsContainer>
     </>
   );

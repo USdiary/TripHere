@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import YesNoModal from '../components/YesNoModal';
-import CommentList from '../components/CommentList';
+import YesNoModal from '../../components/YesNoModal';
+import CommentList from '../../components/CommentList'
 
 const ButtonContainer = styled.div`
     display: flex;

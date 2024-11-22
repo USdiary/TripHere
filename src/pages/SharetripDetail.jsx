@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import CommentList from '../components/CommentList';
-import Editor from './Editor';
+import Editor from './Mytrip/Editor';
 
 // 썸네일과 관련된 스타일 정의
 const ThumbnailContainer = styled.div`

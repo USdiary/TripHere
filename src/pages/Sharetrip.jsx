@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
-import Newtrip from './Newtrip';
+import Newtrip from './Mytrip/Newtrip';
 import Tags from '../components/Tags';
 
 // Styled Components 정의

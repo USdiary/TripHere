@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import DateInput from '../components/DateInput';
-import TagInput from '../components/TagInput';
-import DropdownTagInput from '../components/DropdownTagInput';
-import CommonModal from '../components/CommonModal';
+import DateInput from '../../components/DateInput';
+import TagInput from '../../components/TagInput';
+import DropdownTagInput from '../../components/DropdownTagInput';
+import CommonModal from '../../components/CommonModal';
 
 const NewTripContainer = styled.div`
     display: flex;
@@ -99,7 +99,6 @@ export default function Newtrip({ closeModal }) {
     const navigate = useNavigate();
     const [modalOpen, setModalOpen] = useState(false); // 모달 상태
     const [modalMessage, setModalMessage] = useState(''); // 모달에 표시할 메시지
-    const [itineraryId, setItineraryId] = useState(0);  // itinerary_id 상태
 
     const onChange = (e) => {
         const { value, name } = e.target;

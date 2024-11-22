@@ -3,8 +3,8 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import styled from 'styled-components';
-import YesNoModal from '../components/YesNoModal';
-import Map from '../components/Map'
+import YesNoModal from '../../components/YesNoModal';
+import Map from '../../components/Map'
 
 const ButtonContainer = styled.div`
     display: flex;

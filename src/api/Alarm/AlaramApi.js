@@ -1,5 +1,5 @@
 // 새로운 알림 생성 API
-const createAlarm = async (userId, itineraryId, status) => {
+export const createAlarm = async (userId, itineraryId, status) => {
     try {
         const response = await fetch(`https://yeogida.net/alarms`, {
             method: 'POST',
@@ -26,7 +26,7 @@ const createAlarm = async (userId, itineraryId, status) => {
 };
 
 // 사용자 알림 조회
-const getUserAlarms = async (userId) => {
+export const getUserAlarms = async (userId) => {
     try {
         const response = await fetch(`https://yeogida.net/alarms/${userId}`);
         if (!response.ok) throw new Error(`알림 조회 실패: ${response.status}`);
@@ -37,7 +37,7 @@ const getUserAlarms = async (userId) => {
 };
 
 // 알림 상태 업데이트
-const updateAlarm = async (alarmId, status) => {
+export const updateAlarm = async (alarmId, status) => {
     try {
         const response = await fetch(`https://yeogida.net/alarms/${alarmId}`, {
             method: 'PUT',
@@ -60,7 +60,7 @@ const updateAlarm = async (alarmId, status) => {
 };
 
 // 알림 삭제
-const deleteAlarm = async (alarmId) => {
+export const deleteAlarm = async (alarmId) => {
     try {
         const response = await fetch(`https://yeogida.net/alarms/${alarmId}`, {
             method: 'DELETE',

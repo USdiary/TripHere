@@ -4,8 +4,9 @@ import styled from 'styled-components';
 import Pagination from './Pagination';
 import Modal from 'react-modal';
 import Newtrip from './Newtrip';
-import Card from '../components/Card';
-import Tags from '../components/Tags';
+import Card from '../../components/Card';
+import Tags from '../../components/Tags';
+import { getTrip } from '../../api/Mytrip/Itineraries';
 
 const MyTripContainer = styled.div`
     display: flex;
@@ -304,27 +305,18 @@ export default function MyTrip() {
         }
     };    
 
-
     useEffect(() => {
         const fetchTrips = async () => {
             try {
-                const response = await fetch(`https://yeogida.net/api/itineraries?sort=${sortOrder}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-    
-                if (!response.ok) throw new Error('Error fetching trips');
-                const data = await response.json();
-                setPosts(data);
+                const data = await getTrip(sortOrder); // getTrip 함수 호출
+                setPosts(data); // API 호출 결과를 상태로 설정
             } catch (error) {
                 console.error('Error fetching trips:', error);
             }
         };
-    
-        fetchTrips();
-        fetchUserId();
+
+        fetchTrips(); // 여행 일정 호출
+        fetchUserId(); // 유저 ID 호출
     }, [sortOrder]);    
 
     const handleSortChange = (order) => {

@@ -1,15 +1,14 @@
 import React, {  useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import{
-    fetchUserId,
-    fetchFriendRequests,
-    fetchItineraryDetails,
+import { createAlarm,
     getUserAlarms,
     updateAlarm,
     deleteAlarm
-    
-} from '../api/Alarm/AlaramApi';
+ } from '../api/Alarm/AlaramApi';
+ import { createItineraries } from '../api/Mytrip/Itineraries';
+ import { getUserId } from '../api/Mypage/userinfoAPI';
+ import { getFriendRequest } from '../api/Mypage/friendAPI';
 
 const BellWrapper = styled.div`
     width: 24px;
@@ -158,6 +157,43 @@ const Bell = () => {
     };
 
     useEffect(() => {
+        const fetchUserId = async () => {
+            try {
+                const id = await getUserId();
+                setUserId(id); // 사용자 ID 설정
+            } catch (error) {
+                console.error('Failed to fetch user ID:', error);
+            }
+        };
+
+        fetchUserId();
+    }, []);
+
+    useEffect(() => {
+        const loadNotifications = async () => {
+            if (!userId) return; 
+            const alarms = await getUserAlarms(userId);
+            if (alarms) {
+                setNotifications(alarms); 
+            }
+        };
+
+        const loadFriendRequests = async () => {
+            if (!userId) return; 
+            try {
+                const requests = await getFriendRequest(); // 친구 요청 목록 조회
+                setFriendRequests(requests); 
+                setFriendRequestCount(requests.length); // 친구 요청 개수 설정
+            } catch (error) {
+                console.error('친구 요청을 가져오는 중 오류 발생:', error);
+            }
+        };
+
+        loadNotifications();
+        loadFriendRequests(); // 친구 요청 목록도 함께 로드
+    }, [userId]); // userId가 변경될 때마다 다시 호출
+
+    useEffect(() => {
         let timeout;
         if (!hovered && isDropdownOpen) {
             timeout = setTimeout(() => setIsDropdownOpen(false), 300);
@@ -171,32 +207,12 @@ const Bell = () => {
         };
     }, [hovered, isDropdownOpen]);
 
-    useEffect(() => {
-        const loadNotifications = async () => {
-            if (!userId) return; 
-            const alarms = await getUserAlarms(userId);
-            if (alarms) {
-                setNotifications(alarms); 
-            }
-        };
-
-        const loadFriendRequests = async () => {
-            if (!userId) return; 
-            const requests = await fetchFriendRequests();
-            setFriendRequests(requests);
-            setFriendRequestCount(requests.length);
-        };
-    
-        loadNotifications();
-        loadFriendRequests();
-    }, [userId]); // userId가 변경될 때마다 다시 호출
-
     const handleAccept = async (alarmId, itineraryId) => {
         try {
             const updatedAlarm = await updateAlarm(alarmId, 'accepted');
             if (!updatedAlarm) return;
 
-            const itineraryData = await fetchItineraryDetails(itineraryId);
+            const itineraryData = await createItineraries(itineraryId);
             if (!itineraryData) return;
 
             // 사용자의 일정 추가 및 이후 처리 로직

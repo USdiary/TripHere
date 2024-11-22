@@ -4,8 +4,11 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import styled from 'styled-components';
-import YesNoModal from '../components/YesNoModal';
-import Map from '../components/Map'
+import YesNoModal from '../../components/YesNoModal';
+import Map from '../../components/Map'
+import { getUserId } from '../../api/Mypage/userinfoAPI';
+import { createItineraries } from '../../api/Mytrip/Itineraries';
+import { usePlaces } from './PlaceContext';
 
 const ButtonContainer = styled.div`
     display: flex;
@@ -126,6 +129,7 @@ const TabContainer = styled.div`
   margin: 20px auto;
   background-color: #EEF5FF;
 `;
+
 const DayTabs = styled.div`
   display: flex;
   border-bottom: 1px solid #E0E0E0;
@@ -171,6 +175,8 @@ export default function Editor({ onChange = () => { } }) {
   const [thumbnail, setThumbnail] = useState(initialThumbnail); // 초기 썸네일 파일 객체
   const [thumbnailPreview, setThumbnailPreview] = useState(initialThumbnail ? URL.createObjectURL(initialThumbnail) : null); // 미리보기용 URL
 
+  const { places } = usePlaces();
+  const [dayLocations, setDayLocations] = useState({});
   const [activeTab, setActiveTab] = useState(0);
   const [currentDay, setCurrentDay] = useState(1);
   const [days, setDays] = useState([]);
@@ -231,31 +237,27 @@ export default function Editor({ onChange = () => { } }) {
     setModalOpen(false); // 모달 닫기
   };
 
-  const fetchUserId = async () => {
-        try {
-            const response = await fetch('https://yeogida.net/mypage/account', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            });
-    
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('HTTP 에러 발생:', response.status, errorText);
-                throw new Error(`사용자 정보 조회 실패: ${response.status}, ${errorText}`);
-            }
-    
-            const userData = await response.json();
-            console.log('사용자 정보:', userData);
-            return userData.user_id; // 실제 응답 객체에 따라 user_id를 반환하도록 수정
-        } catch (error) {
-            console.error('네트워크 오류 발생:', error);
-            throw error; // 오류를 호출한 쪽으로 전달
-        }
+  // 장소를 현재 DAY에 추가하는 함수
+  const handleAddLocation = (location) => {
+    setDayLocations((prev) => {
+      const updated = { ...prev };
+      const dayKey = `DAY ${activeTab + 1}`;
+      if (!updated[dayKey]) updated[dayKey] = []; // DAY가 비어있다면 초기화
+      updated[dayKey] = [...updated[dayKey], location]; // 현재 DAY에 장소 추가
+      return updated;
+    });
   };
 
   useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+          const id = await getUserId();
+          setUserId(id); // 상태로 아이디 설정
+      } catch (error) {
+          console.error('Failed to fetch user ID:', error);
+      }
+  };
+
     fetchUserId();
   }, []);
 
@@ -270,46 +272,39 @@ export default function Editor({ onChange = () => { } }) {
   };
 
   const submitTravelPlan = async (requestData) => {
-      try {
-          const formData = new FormData();
-          
-          // FormData에 텍스트 데이터 추가
-          formData.append('itinerary_id', requestData.itinerary_id);
-          formData.append('user_id', requestData.user_id);
-          formData.append('title', requestData.title);
-          formData.append('startdate', requestData.startdate);
-          formData.append('enddate', requestData.enddate);
-          formData.append('destination', requestData.destination);
-          formData.append('public_private', requestData.public_private);
-          formData.append('likenumber', requestData.likenumber);
-          formData.append('description', requestData.description);
-          formData.append('created_at', requestData.created_at);
-          formData.append('updated_at', requestData.updated_at);
-          
-          // FormData에 파일 추가
-          if (requestData.thumbnail) {
-              formData.append('thumbnail', requestData.thumbnail);
-          }
+    try {
+        const formData = new FormData();
 
-          const response = await fetch('https://yeogida.net/api/itineraries', {
-              method: 'POST',
-              body: formData, // FormData를 전송합니다.
-          });
+        // FormData에 데이터 추가
+        formData.append('itinerary_id', requestData.itinerary_id);
+        formData.append('user_id', requestData.user_id);
+        formData.append('title', requestData.title);
+        formData.append('startdate', requestData.startdate);
+        formData.append('enddate', requestData.enddate);
+        formData.append('destination', requestData.destination);
+        formData.append('public_private', requestData.public_private);
+        formData.append('likenumber', requestData.likenumber);
+        formData.append('description', requestData.description);
+        formData.append('created_at', requestData.created_at);
+        formData.append('updated_at', requestData.updated_at);
 
-          if (!response.ok) {
-              const errorText = await response.text();
-              console.error('HTTP 에러 발생:', response.status, errorText);
-              throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-          }
+        // FormData에 파일 추가
+        if (requestData.thumbnail) {
+            formData.append('thumbnail', requestData.thumbnail);
+        }
 
-          const result = await response.json();
-          console.log('여행 일정 등록 성공:', result);
-          navigate('/mytrip'); // 성공 시 나의 여행 페이지로 이동
-      } catch (error) {
-          console.error('네트워크 오류 발생:', error);
-          setModalMessage(`여행 일정 등록에 실패했습니다: ${error.message}`);
-      }
+        // 여행 일정 생성 API 호출
+        const result = await createItineraries(formData);
+        console.log('여행 일정 생성 완료:', result);
+
+        // 성공 시 리다이렉트
+        navigate('/mytrip');
+    } catch (error) {
+        console.error('네트워크 오류 발생:', error);
+        setModalMessage(`여행 일정 등록에 실패했습니다: ${error.message}`);
+    }
   };
+
 
   const handleSaveClick = async (e) => {
       e.preventDefault();
@@ -364,7 +359,12 @@ export default function Editor({ onChange = () => { } }) {
 
       <EditorContainer>
         <MapContainer>
-          <Map />
+        <Map
+          days={days}
+          activeDay={activeTab}
+          setActiveDay={setActiveTab}
+          onAddLocation={handleAddLocation} // 장소 추가 콜백 전달
+        />
         </MapContainer>
 
         <TabContainer>
@@ -389,7 +389,12 @@ export default function Editor({ onChange = () => { } }) {
           </DayTabs>
           {/* 콘텐츠 부분 */}
           <Content>
-            {`DAY ${activeTab + 1} Content`}
+            <h3>{`DAY ${activeTab + 1} Locations`}</h3>
+            <ul>
+              {(dayLocations[`DAY ${activeTab + 1}`] || []).map((location, idx) => (
+                <li key={idx}>{location.name}</li>
+              ))}
+            </ul>
           </Content>
         </TabContainer>
       </EditorContainer>
