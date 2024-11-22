@@ -39,6 +39,21 @@ export const getUserData = async () => {
     }
 };
 
+/* 사용자 아이디 */
+export const getUserId = async () => {
+    try {
+        const response = await fetch(`${BASE_URL}/mypage/account`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data[0]?.id; // 첫 번째 사용자 데이터의 아이디 반환
+    } catch (error) {
+        console.error('Error "getUserId":', error);
+        throw error; // 에러 발생 시 상위로 전달
+    }
+};
+
 /* 개인정보 수정 */
 export const updateUserData = async (updatedData) => {
     try {

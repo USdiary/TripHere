@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import useGeolocation from '../assets/hooks/useGeolocation';
 import { handleSearch as fetchSearchResults } from '../api/Mytrip/Itineraries'; // handleSearch를 fetchSearchResults로 가져옴
+import { usePlaces } from '../pages/Mytrip/PlaceContext';
 
 const SearchContainer = styled.div`
   max-width: 950px;
@@ -117,10 +118,6 @@ const NoResultsMessage = styled.div`
   text-align: center;
 `;
 
-const MapWithTabsContainer = styled.div`
-  max-width: 950px;
-`;
-
 const MapContainer = styled.div`
   width: 80%;
   height: 500px;
@@ -128,48 +125,14 @@ const MapContainer = styled.div`
   box-sizing: border-box;
 `;
 
-const TabContainer = styled.div`
-  display: flex;
-  flex-direction: column;  /* 탭과 콘텐츠를 세로로 배치 */
-  border: 1px solid #ddd;
-  width: 450px;
-  margin: 20px auto;
-  background-color: #EEF5FF;
-`;
-
-const DayTabs = styled.div`
-  display: flex;
-  border-bottom: 1px solid #E0E0E0;
-  width: 450px;
-  margin: 10px auto;
-  margin-bottom: 20px;
-`;
-
-const DayTab = styled.div`
-  flex-shrink: 0;  /* 탭이 축소되지 않도록 설정 */
-  padding: 10px 20px 20px;
-  font-size: 20px;
-  font-weight: ${(props) => (props.isSelected ? 'bold' : 'normal')};
-  color: ${(props) => (props.isSelected ? '#59ABE6' : '#888')};
-  cursor: pointer;
-  border-bottom: ${(props) => (props.isSelected ? '3px solid #59ABE6' : '1px solid transparent')};
-  white-space: nowrap;
-  text-align: center;  /* 텍스트를 중앙 정렬 */
-  font-family: NanumGothic;
-`;
-
-const Content = styled.div`
-  padding: 20px;
-  font-family: NanumGothic;
-`;
-
-function Map() {
+function Map({ days, activeDay, setActiveDay, onAddLocation }) {
   const mapRef = useRef(null);
   const { naver } = window;
   const { currentMyLocation } = useGeolocation();
   const [searchResults, setSearchResults] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [markers, setMarkers] = useState([]);
+  const { addPlace } = usePlaces();
 
   useEffect(() => {
     if (currentMyLocation.lat !== 0 && currentMyLocation.lng !== 0) {
@@ -250,12 +213,21 @@ function Map() {
     }
   };
 
+  // handleAddMarker 함수
   const handleAddMarker = (result) => {
     const newMarker = {
       ...result,
-      index: markers.length + 1,
+      index: markers.length + 1,  // 새로운 마커의 인덱스
     };
-    setMarkers([...markers, newMarker]);
+    setMarkers([...markers, newMarker]);  // 마커 리스트에 새로운 마커 추가
+    addPlace(newMarker);  // 장소 데이터를 context에 저장
+  };
+
+  const handleSelectLocation = (place) => {
+    console.log('선택된 장소:', place);
+    
+    // 장소를 마커로 추가
+    handleAddMarker(place);
   };
 
   useEffect(() => {
@@ -302,7 +274,7 @@ function Map() {
                   <span className="title">{result.title}</span>
                   <span className="address">{result.address}</span>
                 </div>
-                <button className="add-button" onClick={() => handleAddMarker(result)}>
+                <button className="add-button" onClick={() => handleSelectLocation(result)}>
                   + 추가
                 </button>
               </SearchResultItem>
@@ -311,34 +283,7 @@ function Map() {
         ) : (
           <NoResultsMessage>원하는 장소를 검색해보세요.</NoResultsMessage>
         )}
-        <MapWithTabsContainer>
-          <MapContainer id="map" />
-          <TabContainer>
-          <DayTabs>
-            {/* Swiper 컴포넌트를 사용하여 탭을 스와이프 가능하게 만들기 */}
-            <Swiper
-              spaceBetween={0} // 슬라이드 간 간격을 0으로 설정하여 탭들이 붙어서 보이게 함
-              slidesPerView={3} // 한 화면에 3개의 탭을 보여줌
-              onSlideChange={(swiper) => setActiveTab(swiper.realIndex)} // 슬라이드가 변경될 때 activeTab 업데이트
-              loop={false} // loop 활성화로 무한 스와이프를 방지
-            >
-              {days.map((day, index) => (
-                <SwiperSlide key={index}>
-                  <DayTab
-                    isSelected={activeTab === index}
-                    onClick={() => handleTabClick(index)}>
-                    {day}
-                  </DayTab>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </DayTabs>
-          {/* 콘텐츠 부분 */}
-          <Content>
-            {`DAY ${activeTab + 1} Content`}
-          </Content>
-        </TabContainer>
-        </MapWithTabsContainer>
+        <MapContainer id="map" />
       </SearchResultsContainer>
     </>
   );
