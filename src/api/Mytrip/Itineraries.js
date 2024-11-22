@@ -18,21 +18,25 @@ export const getTrip = async (sortOrder) => {
 };
 
 // 새로운 여행일정 생성 API
-export const createItineraries = async (sortOrder) => {
+export const createItineraries = async (formData) => {
     try {
-        const response = await fetch(`https://yeogida.net/api/itineraries?sort=${sortOrder}`, {
+        const response = await fetch('https://yeogida.net/api/itineraries', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            body: formData, // FormData를 그대로 전달
         });
 
-        if (!response.ok) throw new Error('Error fetching trips');
-        const data = await response.json();
-        return data;
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('HTTP 에러 발생:', response.status, errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('여행 일정 등록 성공:', result);
+        return result; // 결과 반환
     } catch (error) {
-        console.error('Error fetching trips:', error);
-        throw error;
+        console.error('Error in createItineraries:', error);
+        throw error; // 에러를 상위로 전달
     }
 };
 
