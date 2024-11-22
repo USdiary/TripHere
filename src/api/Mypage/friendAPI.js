@@ -1,4 +1,4 @@
-const BASE_URL = 'https://yeogida.net';
+const BASE_URL = 'https://www.yeogida.net';
 
 /* 친구 목록 조회 (최신순, 이름순) */
 export const getFriendList = async (sortOption) => {

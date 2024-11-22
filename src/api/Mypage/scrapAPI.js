@@ -1,4 +1,4 @@
-const BASE_URL = 'https://yeogida.net';
+const BASE_URL = 'https://www.yeogida.net';
 
 /* 스크랩 폴더 목록 조회 */
 export const getFolderData = async () => {

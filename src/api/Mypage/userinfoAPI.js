@@ -1,4 +1,4 @@
-const BASE_URL = 'https://yeogida.net';
+const BASE_URL = 'https://www.yeogida.net';
 
 /* 비밀번호를 통한 본인 확인 */
 export const checkPassword = async (data) => {
