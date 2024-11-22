@@ -7,6 +7,7 @@ import Newtrip from './Newtrip';
 import Card from '../../components/Card';
 import Tags from '../../components/Tags';
 import { getTrip } from '../../api/Mytrip/Itineraries';
+import { getUserId } from '../../api/Mypage/userinfoAPI';
 
 const MyTripContainer = styled.div`
     display: flex;
@@ -280,30 +281,7 @@ export default function MyTrip() {
     const [selectedButton, setSelectedButton] = useState('전체일정'); // 선택된 버튼을 추적하는 상태
     const [userId, setUserId] = useState(null);
     const [sortOrder, setSortOrder] = useState('newest'); // 정렬 상태 추가
-    const [showDropdown, setShowDropdown] = useState(false);
-
-    const fetchUserId = async () => {
-        try {
-            const response = await fetch('https://yeogida.net/mypage/account', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            });
-    
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('HTTP 에러 발생:', response.status, errorText);
-                throw new Error(`사용자 정보 조회 실패: ${response.status}, ${errorText}`);
-            }
-    
-            const userData = await response.json();
-            console.log('사용자 정보:', userData);
-            setUserId(userData.user_id);
-        } catch (error) {
-            console.error('네트워크 오류 발생:', error);
-        }
-    };    
+    const [showDropdown, setShowDropdown] = useState(false);   
 
     useEffect(() => {
         const fetchTrips = async () => {
@@ -312,6 +290,15 @@ export default function MyTrip() {
                 setPosts(data); // API 호출 결과를 상태로 설정
             } catch (error) {
                 console.error('Error fetching trips:', error);
+            }
+        };
+
+        const fetchUserId = async () => {
+            try {
+                const id = await getUserId();
+                setUserId(id); // 상태로 아이디 설정
+            } catch (error) {
+                console.error('Failed to fetch user ID:', error);
             }
         };
 
@@ -334,24 +321,6 @@ export default function MyTrip() {
             console.error('일정을 찾을 수 없습니다.');
         }
     };  
-    
-    // 여행 상세 API
-    const fetchItineraryDetails = async (itinerary_id) => {
-        try {
-            const response = await fetch(`https://yeogida.net/api/itineraries/${itinerary_id}`);
-            
-            // 응답이 성공적인 경우
-            if (!response.ok) {
-                throw new Error('일정 정보를 불러오는 데 실패했습니다.');
-            }
-    
-            const data = await response.json(); // JSON 형태로 변환
-            console.log(data); // 데이터 확인
-            return data; // 필요한 경우 반환
-        } catch (error) {
-            console.error('오류:', error);
-        }
-    };    
 
     const toggleView = () => {
         setIsListView(!isListView);

@@ -125,7 +125,7 @@ const MapContainer = styled.div`
   box-sizing: border-box;
 `;
 
-function Map({ days, activeDay, setActiveDay, onAddLocation }) {
+function Map() {
   const mapRef = useRef(null);
   const { naver } = window;
   const { currentMyLocation } = useGeolocation();

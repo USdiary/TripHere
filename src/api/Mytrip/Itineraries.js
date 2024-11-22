@@ -1,7 +1,7 @@
 // 전체, 조건별 여행일정 조회 API
-export const getTrip = async (sortOrder) => {
+export const getTrip = async () => {
     try {
-        const response = await fetch(`https://yeogida.net/api/itineraries?sort=${sortOrder}`, {
+        const response = await fetch(`https://yeogida.net/api/itineraries`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
