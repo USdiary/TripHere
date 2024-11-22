@@ -19,7 +19,9 @@ export const checkIdDuplicate = async (userId) => {
             // 중복된 아이디일 경우
             return { status: response.status, data: responseData };
         } else {
-            throw new Error(responseData.message || 'ID 중복 체크 실패');
+            // 중복된 아이디일 경우
+            return { status: response.status, data: responseData };
+            // throw new Error(responseData.message || 'ID 중복 체크 실패');
         }
     } catch (error) {
         console.error(`ID 중복 체크 오류: ${error.message}`);
