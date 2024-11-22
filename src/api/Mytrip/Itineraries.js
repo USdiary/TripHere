@@ -1,5 +1,5 @@
 // 전체, 조건별 여행일정 조회 API
-const getTrip = async () => {
+export const getTrip = async (sortOrder) => {
     try {
         const response = await fetch(`https://yeogida.net/api/itineraries?sort=${sortOrder}`, {
             method: 'GET',
@@ -10,14 +10,15 @@ const getTrip = async () => {
 
         if (!response.ok) throw new Error('Error fetching trips');
         const data = await response.json();
-        setPosts(data);
+        return data;
     } catch (error) {
         console.error('Error fetching trips:', error);
+        throw error;
     }
 };
 
 // 새로운 여행일정 생성 API
-const createItineraries = async () => {
+export const createItineraries = async (sortOrder) => {
     try {
         const response = await fetch(`https://yeogida.net/api/itineraries?sort=${sortOrder}`, {
             method: 'POST',
@@ -28,14 +29,15 @@ const createItineraries = async () => {
 
         if (!response.ok) throw new Error('Error fetching trips');
         const data = await response.json();
-        setPosts(data);
+        return data;
     } catch (error) {
         console.error('Error fetching trips:', error);
+        throw error;
     }
 };
 
 // 특정 여행일정 조회 API
-const getItineraries = async (itinerary_id) => {
+export const getItineraries = async (itinerary_id) => {
     try {
         const response = await fetch(`https://yeogida.net/api/itineraries/${itinerary_id}`);
         
@@ -52,7 +54,7 @@ const getItineraries = async (itinerary_id) => {
 }; 
 
 // 특정 여행일정 수정 API
-const updateItinerary = async (itineraryId, updatedData) => {
+export const updateItinerary = async (itineraryId, updatedData) => {
     try {
     const response = await fetch(`https://yeogida.net/api/itineraries/${itineraryId}`, {
         method: 'PUT',
@@ -74,7 +76,7 @@ const updateItinerary = async (itineraryId, updatedData) => {
 };
 
 // 특정 여행일정 삭제 API
-const deleteItinerary = async (itinerary_id) => {
+export const deleteItinerary = async (itinerary_id) => {
     try {
         const response = await fetch(`https://yeogida.net/api/itineraries/${itinerary_id}`, {
             method: 'DELETE',
@@ -85,7 +87,6 @@ const deleteItinerary = async (itinerary_id) => {
         }
 
         alert('일정이 성공적으로 삭제되었습니다.');
-        navigate('/mytrip'); // 삭제 후 이동할 페이지
     } catch (error) {
         console.error('오류:', error);
         alert('일정 삭제 중 오류가 발생했습니다.');
@@ -93,19 +94,18 @@ const deleteItinerary = async (itinerary_id) => {
 };
 
 // 지도의 장소 검색 API
-const handleSearch = async () => {
-    if (!searchQuery) return; // 검색어가 없으면 함수 종료
+export const handleSearch = async (searchQuery) => {
+    if (!searchQuery) return []; // 검색어가 없으면 빈 배열 반환
 
     try {
-        console.log('장소 검색 요청 시작'); // 요청 시작 로그
-        console.log(`검색어: ${searchQuery}`); // 검색어 확인
+        console.log('장소 검색 요청 시작');
+        console.log(`검색어: ${searchQuery}`);
 
         const response = await fetch(`https://yeogida.net/api/places/search?query=${encodeURIComponent(searchQuery)}`);
         
         if (response.status === 404) {
             console.error('검색 결과가 없습니다.');
-            setSearchResults([]); // 빈 결과를 표시
-            return;
+            return []; // 빈 배열 반환
         }
 
         if (!response.ok) {
@@ -115,15 +115,14 @@ const handleSearch = async () => {
         const data = await response.json();
         console.log('검색된 장소 결과:', data);
 
-        setSearchResults((data || []).map((item) => ({
+        return (data || []).map((item) => ({
             title: item.title,
             address: item.roadAddress,
             lat: item.mapx,
             lng: item.mapy,
-        })));
-
-        console.log('장소 검색 완료');
+        }));
     } catch (error) {
-        console.error('장소 검색 중 오류 발생:', error); // 오류 발생 로그
+        console.error('장소 검색 중 오류 발생:', error);
+        throw error;
     }
-  };
+};
