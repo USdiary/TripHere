@@ -313,6 +313,7 @@ export default function MyTrip() {
 
     const handleTripClick = async (itinerary_id) => {
         // 여행 일정을 클릭하면 해당 ID의 상세 페이지로 이동
+        /*
         const tripData = await fetchItineraryDetails(itinerary_id);
     
         if (tripData) {
@@ -320,7 +321,8 @@ export default function MyTrip() {
         } else {
             console.error('일정을 찾을 수 없습니다.');
         }
-    };  
+        */
+    };
 
     const toggleView = () => {
         setIsListView(!isListView);
