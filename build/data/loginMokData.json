@@ -1,0 +1,14 @@
+{
+    "users": [
+        {
+            "id": "yeogida24",
+            "password": "swuweb1234*",
+            "token": "mock-jwt-token"
+        },
+        {
+            "id": "sieun1156",
+            "password": "sieun2010!",
+            "token": "mock-sit-token"
+        }
+    ]
+}

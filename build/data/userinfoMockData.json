@@ -1,0 +1,12 @@
+[
+    {
+        "id": "swuweb1234",
+        "name": "백서영",
+        "birthdate": "2000-11-11",
+        "password": "swuweb1234*",
+        "email": "swuweb1234@example.com",
+        "nickname": "sysy",
+        "phonenumber": "010-1111-1111",
+        "profilephoto": "/image/card_img.png"
+    }
+]
