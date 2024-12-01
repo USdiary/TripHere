@@ -3,7 +3,9 @@ const BASE_URL = 'https://www.yeogida.net';
 /* 스크랩 폴더 목록 조회 */
 export const getFolderData = async () => {
     try {
-        const response = await fetch(`${BASE_URL}/mypage/scrap`);
+        const response = await fetch(`${BASE_URL}/mypage/scrap`, {
+            credentials: 'include',
+        });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -23,6 +25,7 @@ export const fetchFolderAdd = async (folderName) => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({
                 folderName
             }),
@@ -42,6 +45,7 @@ export const fetchFolderDelete = async (folderId) => {
     try {
         const response = await fetch(`${BASE_URL}/mypage/scrap/delete/${folderId}`, {
             method: 'DELETE',
+            credentials: 'include',
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -61,6 +65,7 @@ export const fetchFolderNameUpdate = async (folderId, folderName) => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({
                 folderId, folderName
             }),
@@ -78,7 +83,9 @@ export const fetchFolderNameUpdate = async (folderId, folderName) => {
 /* 특정 스크랩 폴더의 스크랩 목록 조회 */
 export const getScrapData = async (folderId) => {
     try {
-        const response = await fetch(`${BASE_URL}/mypage/scrap/${folderId}`);
+        const response = await fetch(`${BASE_URL}/mypage/scrap/${folderId}`, {
+            credentials: 'include',
+        });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -95,6 +102,7 @@ export const fetchScrapDelete = async (folderId, scrapId) => {
     try {
         const response = await fetch(`${BASE_URL}/mypage/scrap/${folderId}/delete/${scrapId}`, {
             method: 'DELETE',
+            credentials: 'include',
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

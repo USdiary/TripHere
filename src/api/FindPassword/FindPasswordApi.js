@@ -7,6 +7,7 @@ export const checkAccountExists = async (userName, email) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({ name: userName, email: email }),
             }
         );
@@ -33,6 +34,7 @@ export const sendVerificationCode = async (name, id, email, code) => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({ name, id, email, code }),
         });
 
@@ -54,6 +56,7 @@ export const resendCodeAPI = async (email, userName) => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({ email, name: userName }),
         });
 

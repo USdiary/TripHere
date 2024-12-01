@@ -3,6 +3,7 @@ const apiRequest = async (url, options = {}) => {
         const response = await fetch(url, {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json', ...options.headers },
+            credentials: 'include',
             ...options,
         });
         if (!response.ok) {

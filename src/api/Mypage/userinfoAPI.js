@@ -7,6 +7,7 @@ export const checkPassword = async (data) => {
         headers: {
             'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ password: data.passwordConfirm }), // 요청 본문에 password 전달
         // credentials: 'include' // 세션 기반 인증을 위한 쿠키 포함
     });
@@ -27,7 +28,9 @@ export const checkPassword = async (data) => {
 /* 개인정보 조회 */
 export const getUserData = async () => {
     try {
-        const response = await fetch(`${BASE_URL}/mypage/account`);
+        const response = await fetch(`${BASE_URL}/mypage/account`, {
+            credentials: 'include',
+        });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -42,7 +45,9 @@ export const getUserData = async () => {
 /* 사용자 아이디 */
 export const getUserId = async () => {
     try {
-        const response = await fetch(`${BASE_URL}/mypage/account`);
+        const response = await fetch(`${BASE_URL}/mypage/account`, {
+            credentials: 'include',
+        });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -62,6 +67,7 @@ export const updateUserData = async (updatedData) => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify(updatedData),
         });
 
@@ -91,6 +97,7 @@ export const sendEmailVerificationCode = async (email, userName) => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({
                 email: email,
                 name: userName,
@@ -120,6 +127,7 @@ export const verifyCertificationCode = async (email, certificationNum) => {
         const response = await fetch('/users/verify-number', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
                 email: email,
                 code: certificationNum,
