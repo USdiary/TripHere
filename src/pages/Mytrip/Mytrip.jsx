@@ -313,7 +313,7 @@ export default function MyTrip() {
 
     const handleTripClick = async (itinerary_id) => {
         // 여행 일정을 클릭하면 해당 ID의 상세 페이지로 이동
-        const tripData = await fetchItineraryDetails(itinerary_id);
+        const tripData = await getItineraries(itinerary_id);
     
         if (tripData) {
             navigate(`/mytrip/${itinerary_id}`, { state: { tripData } }); // tripData를 state로 전달
