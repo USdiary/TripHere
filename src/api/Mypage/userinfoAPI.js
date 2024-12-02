@@ -43,26 +43,33 @@ export const getUserData = async () => {
 };
 
 /* 사용자 아이디 */
-export const getUserId = async (token) => {  // token을 매개변수로 받음
+export const getUserId = async () => {
+    const token = localStorage.getItem('authToken'); // localStorage에서 토큰을 가져옴
+
+    if (!token) {
+        console.error('토큰이 없습니다!');
+        return null;
+    }
+
     try {
         const response = await fetch(`${BASE_URL}/mypage/account`, {
-            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,  // Authorization 헤더에 token 포함
+                'Authorization': `Bearer ${token}`, // 토큰을 Authorization 헤더에 포함
             },
+            credentials: 'include',
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        const data = await response.json();
-        return data[0]?.id;  // 첫 번째 사용자 데이터의 아이디 반환
+
+        const data = await response.json();  // 응답을 JSON으로 처리
+        return data.id;  // 첫 번째 사용자 데이터에서 아이디 반환
     } catch (error) {
         console.error('Error "getUserId":', error);
-        throw error;  // 에러 발생 시 상위로 전달
+        throw error;
     }
-}
+};
 
 /* 개인정보 수정 */
 export const updateUserData = async (updatedData) => {

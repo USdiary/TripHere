@@ -9,7 +9,6 @@ import Map from '../../components/Map'
 import { getUserId } from '../../api/Mypage/userinfoAPI';
 import { createItineraries } from '../../api/Mytrip/Itineraries';
 import { usePlaces } from './PlaceContext';
-import { useAuth } from '../../context/AuthContext';
 
 const ButtonContainer = styled.div`
     display: flex;
@@ -188,8 +187,6 @@ export default function Editor({ onChange = () => { } }) {
   const [itineraryId, setItineraryId] = useState(0);  // itinerary_id 상태
   const [userId, setUserId] = useState(null); // 사용자 ID
 
-  const { token } = useAuth();
-
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
     const year = date.getFullYear();
@@ -254,7 +251,7 @@ export default function Editor({ onChange = () => { } }) {
   useEffect(() => {
     const fetchUserId = async () => {
       try {
-          const id = await getUserId(token);
+          const id = await getUserId();
           setUserId(id); // 상태로 아이디 설정
       } catch (error) {
           console.error('Failed to fetch user ID:', error);
@@ -297,7 +294,7 @@ export default function Editor({ onChange = () => { } }) {
         }
 
         // 여행 일정 생성 API 호출
-        const result = await createItineraries(formData, token);
+        const result = await createItineraries(formData);
         console.log('여행 일정 생성 완료:', result);
 
         // 성공 시 리다이렉트

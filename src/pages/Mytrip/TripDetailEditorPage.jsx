@@ -5,6 +5,7 @@ import 'react-quill/dist/quill.snow.css';
 import styled from 'styled-components';
 import YesNoModal from '../../components/YesNoModal';
 import Map from '../../components/Map'
+import { getItineraries, updateItinerary, deleteItinerary, handleSearch } from '../../api/Mytrip/Itineraries';
 
 const ButtonContainer = styled.div`
     display: flex;
@@ -239,54 +240,12 @@ export default function TripDetailEditorPage({ onChange = () => { } }) {
     const handleModalClose = () => {
         setModalOpen(false); // 모달 닫기
     };
-
-    // const fetchUserId = async () => {
-    //       try {
-    //           const response = await fetch('https://yeogida.net/mypage/account', {
-    //               method: 'GET',
-    //               headers: {
-    //                   'Content-Type': 'application/json'
-    //               },
-    //           });
-        
-    //           if (!response.ok) {
-    //               const errorText = await response.text();
-    //               console.error('HTTP 에러 발생:', response.status, errorText);
-    //               throw new Error(`사용자 정보 조회 실패: ${response.status}, ${errorText}`);
-    //           }
-        
-    //           const userData = await response.json();
-    //           console.log('사용자 정보:', userData);
-    //           return userData.user_id; // 실제 응답 객체에 따라 user_id를 반환하도록 수정
-    //       } catch (error) {
-    //           console.error('네트워크 오류 발생:', error);
-    //           throw error; // 오류를 호출한 쪽으로 전달
-    //       }
-    //   };
-
-    // 여행 상세 API
-    const fetchItineraryDetails = async (itinerary_id) => {
-      try {
-          const response = await fetch(`https://yeogida.net/api/itineraries/${itinerary_id}`);
-          
-          // 응답이 성공적인 경우
-          if (!response.ok) {
-              throw new Error('일정 정보를 불러오는 데 실패했습니다.');
-          }
-  
-          const data = await response.json(); // JSON 형태로 변환
-            console.log(data); // 데이터 확인
-            return data; // 필요한 경우 반환
-        } catch (error) {
-            console.error('오류:', error);
-        }
-    };    
-
+   
     // API 호출
     useEffect(() => {
       const fetchDetails = async () => {
           if (id) {
-              const details = await fetchItineraryDetails(id);
+              const details = await getItineraries(id);
               console.log(details);
               setItineraryDetails(details);
               setLoading(false); // 로딩 종료
@@ -295,28 +254,6 @@ export default function TripDetailEditorPage({ onChange = () => { } }) {
 
       fetchDetails();
     }, [id]);
-
-    // 여행 일정 수정 함수
-    const updateItinerary = async (itineraryId, updatedData) => {
-        try {
-        const response = await fetch(`https://yeogida.net/api/itineraries/${itineraryId}`, {
-            method: 'PUT',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatedData), // 수정할 데이터
-        });
-    
-        if (!response.ok) {
-            throw new Error('여행 일정 수정에 실패했습니다.');
-        }
-    
-        const result = await response.json(); // 성공 시 반환된 데이터를 JSON 형식으로 변환
-        console.log('수정된 여행 일정:', result);
-        } catch (error) {
-        console.error('오류 발생:', error.message);
-        }
-    };
 
     // 로딩 중일 때 처리
     if (loading) {

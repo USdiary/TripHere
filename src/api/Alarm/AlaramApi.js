@@ -1,13 +1,18 @@
-import { authFetch } from "../authFetch";
-
 // 새로운 알림 생성 API
-export const createAlarm = async (userId, itineraryId, status, token) => {
+export const createAlarm = async (userId, itineraryId, status) => {
+    const token = localStorage.getItem('authToken'); // localStorage에서 토큰을 가져옴
+    
+    if (!token) {
+        console.error('토큰이 없습니다!');
+        return;
+    }
+
     try {
-        const response = await authFetch('https://yeogida.net/alarms', {
+        const response = await fetch('https://yeogida.net/alarms', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`, // Authorization 헤더에 token 포함
+                'Authorization': `Bearer ${token}`, // 토큰을 헤더에 포함
             },
             credentials: 'include',
             body: JSON.stringify({
@@ -30,13 +35,20 @@ export const createAlarm = async (userId, itineraryId, status, token) => {
 };
 
 // 사용자 알림 조회
-export const getUserAlarms = async (userId, token) => {
+export const getUserAlarms = async (userId) => {
+    const token = localStorage.getItem('authToken'); // localStorage에서 토큰을 가져옴
+
+    if (!token) {
+        console.error('토큰이 없습니다!');
+        return;
+    }
+
     try {
-        const response = await authFetch(`https://yeogida.net/alarms/${userId}`, {
-            credentials: 'include',
+        const response = await fetch(`https://yeogida.net/alarms/${userId}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
-            }
+                'Authorization': `Bearer ${token}`, // 토큰을 헤더에 포함
+            },
+            credentials: 'include',
         });
         if (!response.ok) throw new Error(`알림 조회 실패: ${response.status}`);
         return await response.json();
@@ -46,13 +58,20 @@ export const getUserAlarms = async (userId, token) => {
 };
 
 // 알림 상태 업데이트
-export const updateAlarm = async (alarmId, status, token) => {
+export const updateAlarm = async (alarmId, status) => {
+    const token = localStorage.getItem('authToken'); // localStorage에서 토큰을 가져옴
+
+    if (!token) {
+        console.error('토큰이 없습니다!');
+        return;
+    }
+
     try {
-        const response = await authFetch(`https://yeogida.net/alarms/${alarmId}`, {
+        const response = await fetch(`https://yeogida.net/alarms/${alarmId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${token}`, // 토큰을 헤더에 포함
             },
             credentials: 'include',
             body: JSON.stringify({ status: status }),
@@ -71,14 +90,21 @@ export const updateAlarm = async (alarmId, status, token) => {
 };
 
 // 알림 삭제
-export const deleteAlarm = async (alarmId, token) => {
+export const deleteAlarm = async (alarmId) => {
+    const token = localStorage.getItem('authToken'); // localStorage에서 토큰을 가져옴
+
+    if (!token) {
+        console.error('토큰이 없습니다!');
+        return;
+    }
+
     try {
-        const response = await authFetch(`https://yeogida.net/alarms/${alarmId}`, {
+        const response = await fetch(`https://yeogida.net/alarms/${alarmId}`, {
             method: 'DELETE',
-            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${token}`,
-            }
+                'Authorization': `Bearer ${token}`, // 토큰을 헤더에 포함
+            },
+            credentials: 'include',
         });
 
         if (response.ok) {

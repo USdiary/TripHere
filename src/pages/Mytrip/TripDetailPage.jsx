@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import YesNoModal from '../../components/YesNoModal';
 import CommentList from '../../components/CommentList'
+import { getItineraries, deleteItinerary } from '../../api/Mytrip/Itineraries';
 
 const ButtonContainer = styled.div`
     display: flex;
@@ -146,9 +147,15 @@ export default function TripDetailPage() {
     const [modalOpen, setModalOpen] = useState(false); // 모달 열림 상태
 
     const handleModalClose = () => {
-        deleteItinerary(id); // 삭제 요청
-        setModalOpen(false); // 모달 닫기
-    };
+      deleteItinerary(id)  // 삭제 요청
+          .then(() => {
+              navigate('/mytrip'); // 삭제 후 페이지 이동
+          })
+          .catch((error) => {
+              console.error('삭제 실패:', error);
+              setModalOpen(false);  // 오류 시 모달 닫기
+          });
+  };
 
     useEffect(() => {
       if (dateRange) {
@@ -170,57 +177,25 @@ export default function TripDetailPage() {
     // 여행 상세 API
     const fetchItineraryDetails = async (itinerary_id) => {
       try {
-          const response = await fetch(`https://yeogida.net/api/itineraries/${itinerary_id}`);
-          
-          // 응답이 성공적인 경우
-          if (!response.ok) {
-              throw new Error('일정 정보를 불러오는 데 실패했습니다.');
-          }
-  
-          const data = await response.json(); // JSON 형태로 변환
-            console.log(data); // 데이터 확인
-            return data; // 필요한 경우 반환
-        } catch (error) {
-            console.error('오류:', error);
-        }
-    };    
+          const details = await getItineraries(itinerary_id);
+          setItineraryDetails(details); // 가져온 여행 상세 내용 상태에 저장
+          setLoading(false); // 로딩 종료
+      } catch (error) {
+          console.error('오류:', error);
+          setLoading(false); // 오류 시에도 로딩 종료
+      }
+    };  
 
     // API 호출
     useEffect(() => {
-      const fetchDetails = async () => {
-          if (id) {
-              const details = await fetchItineraryDetails(id);
-              console.log(details);
-              setItineraryDetails(details);
-              setLoading(false); // 로딩 종료
-          }
-      };
-
-      fetchDetails();
+      if (id) {
+          fetchItineraryDetails(id);
+      }
     }, [id]);
 
     // 수정 버튼 클릭 시 핸들러
     const handleEditClick = () => {
         navigate(`/mytrip/editor/${id}`, { state: { trip } }); // 편집 페이지로 이동
-    };
-
-    // 삭제 요청 함수
-    const deleteItinerary = async (itinerary_id) => {
-        try {
-            const response = await fetch(`https://yeogida.net/api/itineraries/${itinerary_id}`, {
-                method: 'DELETE',
-            });
-
-            if (!response.ok) {
-                throw new Error('일정 삭제에 실패했습니다.');
-            }
-
-            alert('일정이 성공적으로 삭제되었습니다.');
-            navigate('/mytrip'); // 삭제 후 이동할 페이지
-        } catch (error) {
-            console.error('오류:', error);
-            alert('일정 삭제 중 오류가 발생했습니다.');
-        }
     };
 
     // 삭제 버튼 클릭 시 핸들러
