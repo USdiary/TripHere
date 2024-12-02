@@ -1,7 +1,5 @@
-import { useAuth } from '../context/AuthContext';
-
-export const authFetch = async (url, options = {}) => {
-    const { token } = useAuth();  // AuthContext에서 token 가져오기
+// authFetch.js
+export const authFetch = async (url, options = {}, token) => {
     const defaultHeaders = {
         'Authorization': `Bearer ${token}`, // Authorization 헤더에 token 포함
         'Content-Type': 'application/json',

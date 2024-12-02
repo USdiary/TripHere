@@ -1,7 +1,7 @@
 import { authFetch } from "../authFetch";
 
 // 전체, 조건별 여행일정 조회 API
-export const getTrip = async () => {
+export const getTrip = async (token) => {
     try {
         const response = await authFetch(`https://yeogida.net/api/itineraries`, {
             method: 'GET',
@@ -9,7 +9,7 @@ export const getTrip = async () => {
                 'Content-Type': 'application/json',
             },
             credentials: 'include',
-        });
+        }, token);  // token을 넘겨줌
 
         if (!response.ok) throw new Error('Error fetching trips');
         const data = await response.json();
@@ -21,13 +21,13 @@ export const getTrip = async () => {
 };
 
 // 새로운 여행일정 생성 API
-export const createItineraries = async (formData) => {
+export const createItineraries = async (formData, token) => {
     try {
         const response = await authFetch('https://yeogida.net/api/itineraries', {
             method: 'POST',
             body: formData, // FormData를 그대로 전달
             credentials: 'include',
-        });
+        }, token);  // token을 넘겨줌
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -45,11 +45,11 @@ export const createItineraries = async (formData) => {
 };
 
 // 특정 여행일정 조회 API
-export const getItineraries = async (itinerary_id) => {
+export const getItineraries = async (itinerary_id, token) => {
     try {
         const response = await authFetch(`https://yeogida.net/api/itineraries/${itinerary_id}`, {
             credentials: 'include', 
-        });
+        }, token);  // token을 넘겨줌
         
         if (!response.ok) {
             throw new Error('일정 정보를 불러오는 데 실패했습니다.');
@@ -64,35 +64,35 @@ export const getItineraries = async (itinerary_id) => {
 }; 
 
 // 특정 여행일정 수정 API
-export const updateItinerary = async (itineraryId, updatedData) => {
+export const updateItinerary = async (itineraryId, updatedData, token) => {
     try {
-    const response = await authFetch(`https://yeogida.net/api/itineraries/${itineraryId}`, {
-        method: 'PUT',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(updatedData), // 수정할 데이터
-    });
+        const response = await authFetch(`https://yeogida.net/api/itineraries/${itineraryId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(updatedData), // 수정할 데이터
+        }, token);  // token을 넘겨줌
 
-    if (!response.ok) {
-        throw new Error('여행 일정 수정에 실패했습니다.');
-    }
+        if (!response.ok) {
+            throw new Error('여행 일정 수정에 실패했습니다.');
+        }
 
-    const result = await response.json(); // 성공 시 반환된 데이터를 JSON 형식으로 변환
-    console.log('수정된 여행 일정:', result);
+        const result = await response.json(); // 성공 시 반환된 데이터를 JSON 형식으로 변환
+        console.log('수정된 여행 일정:', result);
     } catch (error) {
-    console.error('오류 발생:', error.message);
+        console.error('오류 발생:', error.message);
     }
 };
 
 // 특정 여행일정 삭제 API
-export const deleteItinerary = async (itinerary_id) => {
+export const deleteItinerary = async (itinerary_id, token) => {
     try {
         const response = await authFetch(`https://yeogida.net/api/itineraries/${itinerary_id}`, {
             method: 'DELETE',
             credentials: 'include',
-        });
+        }, token);  // token을 넘겨줌
 
         if (!response.ok) {
             throw new Error('일정 삭제에 실패했습니다.');
@@ -106,7 +106,7 @@ export const deleteItinerary = async (itinerary_id) => {
 };
 
 // 지도의 장소 검색 API
-export const handleSearch = async (searchQuery) => {
+export const handleSearch = async (searchQuery, token) => {
     if (!searchQuery) return []; // 검색어가 없으면 빈 배열 반환
 
     try {
@@ -115,7 +115,8 @@ export const handleSearch = async (searchQuery) => {
 
         const response = await authFetch(`https://yeogida.net/api/places/search?query=${encodeURIComponent(searchQuery)}`, {
             credentials: 'include',
-        });
+        }, token);  // token을 넘겨줌
+
         if (response.status === 404) {
             console.error('검색 결과가 없습니다.');
             return []; // 빈 배열 반환

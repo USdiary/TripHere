@@ -8,6 +8,7 @@ import Card from '../../components/Card';
 import Tags from '../../components/Tags';
 import { getTrip, getItineraries } from '../../api/Mytrip/Itineraries';
 import { getUserId } from '../../api/Mypage/userinfoAPI';
+import { useAuth } from "../../context/AuthContext";
 
 const MyTripContainer = styled.div`
     display: flex;
@@ -282,30 +283,34 @@ export default function MyTrip() {
     const [userId, setUserId] = useState(null);
     const [sortOrder, setSortOrder] = useState('newest'); // 정렬 상태 추가
     const [showDropdown, setShowDropdown] = useState(false);   
+    const { token } = useAuth();
 
     useEffect(() => {
         const fetchTrips = async () => {
             try {
-                const data = await getTrip(sortOrder); // getTrip 함수 호출
-                setPosts(data); // API 호출 결과를 상태로 설정
+                const data = await getTrip(sortOrder, token);
+                setPosts(data);
             } catch (error) {
                 console.error('Error fetching trips:', error);
             }
         };
-
+    
+        fetchTrips();
+    }, [sortOrder]);
+    
+    useEffect(() => {
         const fetchUserId = async () => {
             try {
                 const id = await getUserId();
-                setUserId(id); // 상태로 아이디 설정
+                setUserId(id);
             } catch (error) {
                 console.error('Failed to fetch user ID:', error);
             }
         };
-
-        fetchTrips(); // 여행 일정 호출
+    
         fetchUserId(); // 유저 ID 호출
-    }, [sortOrder]);    
-
+    }, []);
+    
     const handleSortChange = (order) => {
         setSortOrder(order);
         setShowDropdown(false); // 드롭다운 닫기
@@ -313,7 +318,7 @@ export default function MyTrip() {
 
     const handleTripClick = async (itinerary_id) => {
         // 여행 일정을 클릭하면 해당 ID의 상세 페이지로 이동
-        const tripData = await getItineraries(itinerary_id);
+        const tripData = await getItineraries(itinerary_id, token);
     
         if (tripData) {
             navigate(`/mytrip/${itinerary_id}`, { state: { tripData } }); // tripData를 state로 전달

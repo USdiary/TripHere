@@ -9,6 +9,7 @@ import { createAlarm,
  import { createItineraries } from '../api/Mytrip/Itineraries';
  import { getUserId } from '../api/Mypage/userinfoAPI';
  import { getFriendRequest } from '../api/Mypage/friendAPI';
+ import { useAuth } from '../context/AuthContext';
 
 const BellWrapper = styled.div`
     width: 24px;
@@ -151,6 +152,7 @@ const Bell = () => {
     const [userId, setUserId] = useState(null); // 사용자 ID
     const [friendRequests, setFriendRequests] = useState([]);
     const [friendRequestCount, setFriendRequestCount] = useState(0);
+    const { token } = useAuth();
 
     const handleBellClick = () => {
         setIsDropdownOpen(!isDropdownOpen); // 드롭다운 열기/닫기 토글
@@ -159,7 +161,7 @@ const Bell = () => {
     useEffect(() => {
         const fetchUserId = async () => {
             try {
-                const id = await getUserId();
+                const id = await getUserId(token);
                 setUserId(id); // 사용자 ID 설정
             } catch (error) {
                 console.error('Failed to fetch user ID:', error);
@@ -209,10 +211,10 @@ const Bell = () => {
 
     const handleAccept = async (alarmId, itineraryId) => {
         try {
-            const updatedAlarm = await updateAlarm(alarmId, 'accepted');
+            const updatedAlarm = await updateAlarm(alarmId, 'accepted', token);
             if (!updatedAlarm) return;
 
-            const itineraryData = await createItineraries(itineraryId);
+            const itineraryData = await createItineraries(itineraryId, token);
             if (!itineraryData) return;
 
             // 사용자의 일정 추가 및 이후 처리 로직
@@ -224,7 +226,7 @@ const Bell = () => {
     // 특정 알림 삭제
     const handleReject = async (alarmId) => {
         try {
-            const isDeleted = await deleteAlarm(alarmId);  // 알림 삭제 API 호출
+            const isDeleted = await deleteAlarm(alarmId, token);  // 알림 삭제 API 호출
     
             if (isDeleted) {
                 // 알림이 성공적으로 삭제되었으면, 로컬 상태에서 알림 리스트에서 해당 알림을 제거합니다.
