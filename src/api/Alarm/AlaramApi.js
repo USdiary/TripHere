@@ -6,6 +6,7 @@ export const createAlarm = async (userId, itineraryId, status) => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({
                 user_id: userId,
                 itinerary_id: itineraryId,
@@ -28,7 +29,9 @@ export const createAlarm = async (userId, itineraryId, status) => {
 // 사용자 알림 조회
 export const getUserAlarms = async (userId) => {
     try {
-        const response = await fetch(`https://yeogida.net/alarms/${userId}`);
+        const response = await fetch(`https://yeogida.net/alarms/${userId}`, {
+            credentials: 'include',
+        });
         if (!response.ok) throw new Error(`알림 조회 실패: ${response.status}`);
         return await response.json();
     } catch (error) {
@@ -44,6 +47,7 @@ export const updateAlarm = async (alarmId, status) => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify({ status: status }),
         });
 
@@ -64,6 +68,7 @@ export const deleteAlarm = async (alarmId) => {
     try {
         const response = await fetch(`https://yeogida.net/alarms/${alarmId}`, {
             method: 'DELETE',
+            credentials: 'include',
         });
 
         if (response.ok) {

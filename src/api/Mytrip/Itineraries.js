@@ -6,6 +6,7 @@ export const getTrip = async () => {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
         });
 
         if (!response.ok) throw new Error('Error fetching trips');
@@ -23,6 +24,7 @@ export const createItineraries = async (formData) => {
         const response = await fetch('https://yeogida.net/api/itineraries', {
             method: 'POST',
             body: formData, // FormData를 그대로 전달
+            credentials: 'include',
         });
 
         if (!response.ok) {
@@ -43,7 +45,9 @@ export const createItineraries = async (formData) => {
 // 특정 여행일정 조회 API
 export const getItineraries = async (itinerary_id) => {
     try {
-        const response = await fetch(`https://yeogida.net/api/itineraries/${itinerary_id}`);
+        const response = await fetch(`https://yeogida.net/api/itineraries/${itinerary_id}`, {
+            credentials: 'include', 
+        });
         
         if (!response.ok) {
             throw new Error('일정 정보를 불러오는 데 실패했습니다.');
@@ -65,6 +69,7 @@ export const updateItinerary = async (itineraryId, updatedData) => {
         headers: {
         'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(updatedData), // 수정할 데이터
     });
 
@@ -84,6 +89,7 @@ export const deleteItinerary = async (itinerary_id) => {
     try {
         const response = await fetch(`https://yeogida.net/api/itineraries/${itinerary_id}`, {
             method: 'DELETE',
+            credentials: 'include',
         });
 
         if (!response.ok) {
@@ -105,8 +111,9 @@ export const handleSearch = async (searchQuery) => {
         console.log('장소 검색 요청 시작');
         console.log(`검색어: ${searchQuery}`);
 
-        const response = await fetch(`https://yeogida.net/api/places/search?query=${encodeURIComponent(searchQuery)}`);
-        
+        const response = await fetch(`https://yeogida.net/api/places/search?query=${encodeURIComponent(searchQuery)}`, {
+            credentials: 'include',
+        });
         if (response.status === 404) {
             console.error('검색 결과가 없습니다.');
             return []; // 빈 배열 반환
