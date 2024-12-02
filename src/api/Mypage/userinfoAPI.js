@@ -1,3 +1,5 @@
+import { authFetch } from "../authFetch";
+
 const BASE_URL = 'https://www.yeogida.net';
 
 /* 비밀번호를 통한 본인 확인 */
@@ -45,7 +47,7 @@ export const getUserData = async () => {
 /* 사용자 아이디 */
 export const getUserId = async () => {
     try {
-        const response = await fetch(`${BASE_URL}/mypage/account`, {
+        const response = await authFetch(`${BASE_URL}/mypage/account`, {
             credentials: 'include',
         });
         if (!response.ok) {

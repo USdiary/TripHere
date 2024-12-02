@@ -1,7 +1,9 @@
+import { authFetch } from "../authFetch";
+
 // 전체, 조건별 여행일정 조회 API
 export const getTrip = async () => {
     try {
-        const response = await fetch(`https://yeogida.net/api/itineraries`, {
+        const response = await authFetch(`https://yeogida.net/api/itineraries`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -21,7 +23,7 @@ export const getTrip = async () => {
 // 새로운 여행일정 생성 API
 export const createItineraries = async (formData) => {
     try {
-        const response = await fetch('https://yeogida.net/api/itineraries', {
+        const response = await authFetch('https://yeogida.net/api/itineraries', {
             method: 'POST',
             body: formData, // FormData를 그대로 전달
             credentials: 'include',
@@ -45,7 +47,7 @@ export const createItineraries = async (formData) => {
 // 특정 여행일정 조회 API
 export const getItineraries = async (itinerary_id) => {
     try {
-        const response = await fetch(`https://yeogida.net/api/itineraries/${itinerary_id}`, {
+        const response = await authFetch(`https://yeogida.net/api/itineraries/${itinerary_id}`, {
             credentials: 'include', 
         });
         
@@ -64,7 +66,7 @@ export const getItineraries = async (itinerary_id) => {
 // 특정 여행일정 수정 API
 export const updateItinerary = async (itineraryId, updatedData) => {
     try {
-    const response = await fetch(`https://yeogida.net/api/itineraries/${itineraryId}`, {
+    const response = await authFetch(`https://yeogida.net/api/itineraries/${itineraryId}`, {
         method: 'PUT',
         headers: {
         'Content-Type': 'application/json',
@@ -87,7 +89,7 @@ export const updateItinerary = async (itineraryId, updatedData) => {
 // 특정 여행일정 삭제 API
 export const deleteItinerary = async (itinerary_id) => {
     try {
-        const response = await fetch(`https://yeogida.net/api/itineraries/${itinerary_id}`, {
+        const response = await authFetch(`https://yeogida.net/api/itineraries/${itinerary_id}`, {
             method: 'DELETE',
             credentials: 'include',
         });
@@ -111,7 +113,7 @@ export const handleSearch = async (searchQuery) => {
         console.log('장소 검색 요청 시작');
         console.log(`검색어: ${searchQuery}`);
 
-        const response = await fetch(`https://yeogida.net/api/places/search?query=${encodeURIComponent(searchQuery)}`, {
+        const response = await authFetch(`https://yeogida.net/api/places/search?query=${encodeURIComponent(searchQuery)}`, {
             credentials: 'include',
         });
         if (response.status === 404) {
