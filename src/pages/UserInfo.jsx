@@ -185,7 +185,6 @@ const userinfoData = styled.div`
 // ----------비밀번호 확인 전 Component----------
 function BeforeCheck ({ btnClick, userInfo }) {
     const { register, handleSubmit, formState: { errors }, setError } = useForm();
-    const [myPassword, setMyPassword] = useState('1111'); // 임시 비밀번호
     const [profileImg, setProfileImg] = useState(userInfo?.profilephoto || defaultProfileImg); // 유저 프로필 사진
     // const [isSubmitted, setIsSubmitted] = useState(false); // 확인 버튼을 눌렀는지 확인하는 상태
 
@@ -247,7 +246,7 @@ function BeforeCheck ({ btnClick, userInfo }) {
                 <InputField
                     id="PasswordConfirm"
                     type="password"
-                    placeholder="비밀번호 확인(1111)"
+                    placeholder="비밀번호 확인"
                     {...register('passwordConfirm', {
                         required: '비밀번호를 입력해주세요.',
                     })}
