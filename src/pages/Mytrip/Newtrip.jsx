@@ -5,6 +5,7 @@ import DateInput from '../../components/DateInput';
 import TagInput from '../../components/TagInput';
 import DropdownTagInput from '../../components/DropdownTagInput';
 import CommonModal from '../../components/CommonModal';
+import { getFriendList } from '../../api/Mypage/friendAPI';
 
 const NewTripContainer = styled.div`
     display: flex;
@@ -85,7 +86,7 @@ const ModalButton = styled.button`
 `;
 
 export default function Newtrip({ closeModal }) {
-    const [sharedOptions, setSharedOptions] = useState([{ value: 'none', label: '없음' }]);
+    const [sharedOptions, setSharedOptions] = useState([]);
 
     const [inputs, setInputs] = useState({
         제목: "",
@@ -152,29 +153,28 @@ export default function Newtrip({ closeModal }) {
     useEffect(() => {
         const fetchFriends = async () => {
             try {
-                const response = await fetch('/mypage/friend?status=name', {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
-                });
-                
-                if (!response.ok) {
-                    console.error('친구 목록 불러오기 실패:', response.status);
-                    return;
-                }
+                // 이름순으로 친구 목록을 가져오기
+                const friends = await getFriendList(2);
 
-                const friends = await response.json();
                 const options = friends.map(friend => ({
                     value: friend.name,
                     label: friend.name, // 표시할 라벨
                 }));
-                setSharedOptions(options);
+
+                // 친구 목록이 없으면 '없음' 옵션
+                if (options.length === 0) {
+                    options.push({ value: 'none', label: '없음' });
+                }
+
+                // 목록이 있으면 setSharedOptions에 저장
+                setSharedOptions(options); 
             } catch (error) {
-                console.error('네트워크 오류 발생:', error);
+                console.error('친구 목록 불러오기 실패:', error);
             }
         };
 
         fetchFriends();
-    }, []);   
+    }, []);
 
     const handleModalClose = () => {
         setModalOpen(false);
